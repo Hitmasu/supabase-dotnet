@@ -1,0 +1,39 @@
+name: Build Validation
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'src/**'
+      - '.github/workflows/build-validation.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'src/**'
+      - '.github/workflows/build-validation.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x' # SDK que suporta netstandard2.1
+    
+    - name: Restore dependencies
+      run: dotnet restore
+      
+    - name: Build
+      run: dotnet build --configuration Release --no-restore
+      
+    - name: Test
+      run: dotnet test --no-build --configuration Release --verbosity normal
+
+    - name: Check Project References
+      run: |
+        dotnet list src/Supabase/Supabase.csproj package
+        dotnet list src/Supabase.Authentication/Supabase.Authentication.csproj package 
