@@ -25,13 +25,13 @@ jobs:
         dotnet-version: '9.0.x' # SDK que suporta netstandard2.1
     
     - name: Restore dependencies
-      run: dotnet restore
+      run: dotnet restore ./src/Supabase.sln
       
     - name: Build
-      run: dotnet build --configuration Release --no-restore
+      run: dotnet build ./src/Supabase.sln --configuration Release --no-restore
       
     - name: Test
-      run: dotnet test --no-build --configuration Release --verbosity normal
+      run: dotnet test ./src/Supabase.sln --no-build --configuration Release --verbosity normal
 
     - name: Check Project References
       run: |
