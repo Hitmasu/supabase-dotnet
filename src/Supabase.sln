@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Supabase", "Supabase\Supabase.csproj", "{847B44D6-8688-4080-AFF4-D02B2181E48C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Supabase.Authentication.Tests", "Supabase.Authentication.Tests\Supabase.Authentication.Tests.csproj", "{3F908FCC-76DD-4C23-B30C-E54E2474659F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Supabase.Authentication", "Supabase.Authentication\Supabase.Authentication.csproj", "{F9E46121-C767-477E-9451-B4536CF9301B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{847B44D6-8688-4080-AFF4-D02B2181E48C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{847B44D6-8688-4080-AFF4-D02B2181E48C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{847B44D6-8688-4080-AFF4-D02B2181E48C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{847B44D6-8688-4080-AFF4-D02B2181E48C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3F908FCC-76DD-4C23-B30C-E54E2474659F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3F908FCC-76DD-4C23-B30C-E54E2474659F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3F908FCC-76DD-4C23-B30C-E54E2474659F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3F908FCC-76DD-4C23-B30C-E54E2474659F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F9E46121-C767-477E-9451-B4536CF9301B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F9E46121-C767-477E-9451-B4536CF9301B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F9E46121-C767-477E-9451-B4536CF9301B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F9E46121-C767-477E-9451-B4536CF9301B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
