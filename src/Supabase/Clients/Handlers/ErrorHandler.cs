@@ -20,7 +20,23 @@ public class ErrorHandler : DelegatingHandler
             return response;
 
         var responseContent = await response.Content.ReadAsStringAsync();
-        var errorInfo = JsonSerializer.Deserialize<ErrorResponse>(responseContent)!;
+
+        ErrorResponse errorInfo;
+
+        try
+        {
+            errorInfo = JsonSerializer.Deserialize<ErrorResponse>(responseContent, new JsonSerializerOptions()
+            {
+                PropertyNameCaseInsensitive = true
+            })!;
+        }
+        catch
+        {
+            errorInfo = new ErrorResponse()
+            {
+                InternalMessage = responseContent
+            };
+        }
 
         throw new SupabaseException(errorInfo.Message, errorInfo, responseContent);
     }

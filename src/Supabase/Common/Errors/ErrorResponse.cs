@@ -11,16 +11,28 @@ public class ErrorResponse
     /// Code of the error.
     /// </summary>
     public virtual int Code { get; set; }
-    
+
     /// <summary>
     /// Description of code.
     /// </summary>
-    [JsonPropertyName("error_code")]
-    public virtual string Error { get; set; }
+    [JsonIgnore]
+    public virtual string Error => (ErrorCode ?? InternalErrorCode)!;
+
+    [JsonIgnore]
+    public string Message => (InternalMessage ?? ErrorDescription)!;
 
     /// <summary>
     /// Message of the error.
     /// </summary>
     [JsonPropertyName("msg")]
-    public virtual string Message { get; set; }
+    public virtual string? InternalMessage { get; set; }
+
+    [JsonPropertyName("error_description")]
+    public string? ErrorDescription { get; set; }
+
+    [JsonPropertyName("error_code")]
+    public string? ErrorCode { get; set; }
+
+    [JsonPropertyName("error")]
+    public string? InternalErrorCode { get; set; }
 }

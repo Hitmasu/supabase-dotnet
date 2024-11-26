@@ -27,4 +27,9 @@ public class SupabaseException : Exception
         Info = info;
         Content = content;
     }
+
+    public override string ToString()
+    {
+        return $"SupabaseException: {Message}";
+    }
 }
