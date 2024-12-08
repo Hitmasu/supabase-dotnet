@@ -41,7 +41,7 @@ public interface IGoTrueApi
         Guid userId,
         CancellationToken cancellationToken) where TCustomMetadata : UserMetadataBase;
 
-    [Put("/users")]
+    [Put("/user")]
     Task<UserResponse<TCustomMetadata>> UpdateUserAsync<TCustomMetadata>([Body] object request,
         CancellationToken cancellationToken) where TCustomMetadata : UserMetadataBase;
 
