@@ -218,9 +218,10 @@ internal class SupabaseAuth : ClientBase<SupabaseAuth>, ISupabaseAuth
         GenerateLinkAsync<UserMetadataBase>(request, cancellationToken);
 
     /// <inheritdoc cref="ISupabaseAuth"/>
-    public async ValueTask<InviteResponse> InviteAsync(string email, CancellationToken cancellationToken = default)
+    public async ValueTask<InviteResponse> InviteAsync(string email, object? data = null,
+        CancellationToken cancellationToken = default)
     {
-        var request = new InviteRequest(email);
+        var request = new InviteRequest(email, data);
         return await _goTrueApi.InviteAsync(request, cancellationToken);
     }
 

@@ -198,9 +198,11 @@ public interface ISupabaseAuth : IClientBase
     /// Invites a user to join the application.
     /// </summary>
     /// <param name="email">The email address of the user to invite.</param>
+    /// <param name="data">(Optional) Custom data to send.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>Invite info.</returns>
-    ValueTask<InviteResponse> InviteAsync(string email, CancellationToken cancellationToken = default);
+    ValueTask<InviteResponse> InviteAsync(string email, object? data = null,
+        CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Recovers a user's password.
