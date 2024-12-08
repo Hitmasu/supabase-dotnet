@@ -566,7 +566,7 @@ public class SupabaseAuth
             ZipCode = faker.Address.ZipCode()
         };
 
-        var updatedUser = await client.UpdateUserAsync(user);
+        var updatedUser = await client.UpdateUserAsAdminAsync(user);
 
         updatedUser.UserMetadata.Address.Should().BeEquivalentTo(user.UserMetadata.Address);
     }
@@ -624,7 +624,7 @@ public class SupabaseAuth
             }
         };
 
-        var updatedUser = await client.UpdateUserAsync<CustomUserMetadata>(user.Id, updateObj);
+        var updatedUser = await client.UpdateUserAsAdminAsync<CustomUserMetadata>(user.Id, updateObj);
         updatedUser.UserMetadata.Address.City.Should().Be(updateObj.user_metadata.address.city);
     }
 

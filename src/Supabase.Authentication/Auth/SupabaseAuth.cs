@@ -31,12 +31,7 @@ internal class SupabaseAuth : ClientBase<SupabaseAuth>, ISupabaseAuth
         _tokenResolver = tokenResolver;
     }
 
-    /// <summary>
-    /// SignIn user in Supabase.
-    /// </summary>
-    /// <param name="request">Credentials user.</param>
-    /// <param name="cancellationToken"></param>
-    /// <returns>Token info from Supabase.</returns>
+    /// <inheritdoc cref="ISupabaseAuth"/>
     private async ValueTask<SignInResponse<TCustomMetadata>> SignInAsync<TCustomMetadata>(SignInRequest request,
         CancellationToken cancellationToken = default) where TCustomMetadata : UserMetadataBase
     {
@@ -53,12 +48,7 @@ internal class SupabaseAuth : ClientBase<SupabaseAuth>, ISupabaseAuth
         return response;
     }
 
-    /// <summary>
-    /// SignUp user in Supabase.
-    /// </summary>
-    /// <param name="request">User info to register.</param>
-    /// <param name="cancellationToken"></param>
-    /// <returns>User registered.</returns>
+    /// <inheritdoc cref="ISupabaseAuth"/>
     private async ValueTask<SignInResponse<TCustomMetadata>> SignUpAsync<TCustomMetadata>(SignUpRequest request,
         CancellationToken cancellationToken = default) where TCustomMetadata : UserMetadataBase
     {
@@ -179,29 +169,52 @@ internal class SupabaseAuth : ClientBase<SupabaseAuth>, ISupabaseAuth
     {
         return await _goTrueApi.CreateUserAsync(request, cancellationToken);
     }
-
+    
     /// <inheritdoc cref="ISupabaseAuth"/>
-    public ValueTask<UserResponse<UserMetadataBase>> UpdateUserAsync(UserResponse<UserMetadataBase> user,
+    public ValueTask<UserResponse<UserMetadataBase>> UpdateUserAsync(object user,
         CancellationToken cancellationToken = default) =>
         UpdateUserAsync<UserMetadataBase>(user, cancellationToken);
 
     /// <inheritdoc cref="ISupabaseAuth"/>
-    public ValueTask<UserResponse<TCustomMetadata>> UpdateUserAsync<TCustomMetadata>(
-        UserResponse<TCustomMetadata> user, CancellationToken cancellationToken = default)
-        where TCustomMetadata : UserMetadataBase => UpdateUserAsync<TCustomMetadata>(user.Id, user, cancellationToken);
-
-    /// <inheritdoc cref="ISupabaseAuth"/>
-    public async ValueTask<UserResponse<TCustomMetadata>> UpdateUserAsync<TCustomMetadata>(Guid userId,
-        object request, CancellationToken cancellationToken = default)
-        where TCustomMetadata : UserMetadataBase
+    public ValueTask<UserResponse<UserMetadataBase>> UpdateUserAsync(UserResponse<UserMetadataBase> user,
+        CancellationToken cancellationToken = default)
     {
-        return await _goTrueApi.UpdateUserAsync<TCustomMetadata>(request, userId, cancellationToken);
+        user.Identities = null!;
+        user.AppMetadata = null!;
+        return UpdateUserAsync<UserMetadataBase>(user, cancellationToken);
     }
 
     /// <inheritdoc cref="ISupabaseAuth"/>
-    public ValueTask<UserResponse<UserMetadataBase>> UpdateUserAsync(Guid userId,
+    public async ValueTask<UserResponse<TCustomMetadata>> UpdateUserAsync<TCustomMetadata>(object user,
+        CancellationToken cancellationToken = default)
+        where TCustomMetadata : UserMetadataBase 
+    {
+         return await _goTrueApi.UpdateUserAsync<TCustomMetadata>(user, cancellationToken);
+    }
+
+    /// <inheritdoc cref="ISupabaseAuth"/>
+    public ValueTask<UserResponse<UserMetadataBase>> UpdateUserAsAdminAsync(UserResponse<UserMetadataBase> user,
+        CancellationToken cancellationToken = default) =>
+        UpdateUserAsAdminAsync<UserMetadataBase>(user, cancellationToken);
+
+    /// <inheritdoc cref="ISupabaseAuth"/>
+    public ValueTask<UserResponse<TCustomMetadata>> UpdateUserAsAdminAsync<TCustomMetadata>(
+        UserResponse<TCustomMetadata> user, CancellationToken cancellationToken = default)
+        where TCustomMetadata : UserMetadataBase =>
+        UpdateUserAsAdminAsync<TCustomMetadata>(user.Id, user, cancellationToken);
+
+    /// <inheritdoc cref="ISupabaseAuth"/>
+    public async ValueTask<UserResponse<TCustomMetadata>> UpdateUserAsAdminAsync<TCustomMetadata>(Guid userId,
+        object request, CancellationToken cancellationToken = default)
+        where TCustomMetadata : UserMetadataBase
+    {
+        return await _goTrueApi.UpdateUserAsAdminAsync<TCustomMetadata>(request, userId, cancellationToken);
+    }
+
+    /// <inheritdoc cref="ISupabaseAuth"/>
+    public ValueTask<UserResponse<UserMetadataBase>> UpdateUserAsAdminAsync(Guid userId,
         object request, CancellationToken cancellationToken = default) =>
-        UpdateUserAsync<UserMetadataBase>(userId, request, cancellationToken);
+        UpdateUserAsAdminAsync<UserMetadataBase>(userId, request, cancellationToken);
 
     /// <inheritdoc cref="ISupabaseAuth"/>
     public async ValueTask<GenerateLinkResponse<TCustomMetadata>> GenerateLinkAsync<TCustomMetadata>(

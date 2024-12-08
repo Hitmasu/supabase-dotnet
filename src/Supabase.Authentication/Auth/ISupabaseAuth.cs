@@ -134,43 +134,43 @@ public interface ISupabaseAuth : IClientBase
         where TCustomMetadata : UserMetadataBase;
 
     /// <summary>
-    /// Updates the information for the current user.
+    /// Updates the information for the current user (Requires admin privileges).
     /// </summary>
     /// <param name="user">The user to update.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>User updated.</returns>
-    ValueTask<UserResponse<UserMetadataBase>> UpdateUserAsync(UserResponse<UserMetadataBase> user,
+    ValueTask<UserResponse<UserMetadataBase>> UpdateUserAsAdminAsync(UserResponse<UserMetadataBase> user,
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Updates the information for the current user with custom metadata.
+    /// Updates the information for the current user with custom metadata (Requires admin privileges).
     /// </summary>
     /// <typeparam name="TCustomMetadata">The type of custom metadata.</typeparam>
     /// <param name="user">The user to update.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>User updated.</returns>
-    ValueTask<UserResponse<TCustomMetadata>> UpdateUserAsync<TCustomMetadata>(UserResponse<TCustomMetadata> user,
+    ValueTask<UserResponse<TCustomMetadata>> UpdateUserAsAdminAsync<TCustomMetadata>(UserResponse<TCustomMetadata> user,
         CancellationToken cancellationToken = default) where TCustomMetadata : UserMetadataBase;
 
     /// <summary>
-    /// Updates the information for the user with the given ID.
+    /// Updates the information for the user with the given ID (Requires admin privileges).
     /// </summary>
     /// <param name="userId">The ID of the user to update.</param>
     /// <param name="request">The request to update the user.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>A task that represents the asynchronous update user operation.</returns>
-    ValueTask<UserResponse<UserMetadataBase>> UpdateUserAsync(Guid userId, object request,
+    ValueTask<UserResponse<UserMetadataBase>> UpdateUserAsAdminAsync(Guid userId, object request,
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Updates the information for the user with the given ID.
+    /// Updates the information for the user with the given ID (Requires admin privileges).
     /// </summary>
     /// <param name="userId">The ID of the user to update.</param>
     /// <param name="request">The request to update the user.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <typeparam name="TCustomMetadata">The type of custom metadata.</typeparam>
     /// <returns>Updated user.</returns>
-    ValueTask<UserResponse<TCustomMetadata>> UpdateUserAsync<TCustomMetadata>(Guid userId,
+    ValueTask<UserResponse<TCustomMetadata>> UpdateUserAsAdminAsync<TCustomMetadata>(Guid userId,
         object request, CancellationToken cancellationToken = default)
         where TCustomMetadata : UserMetadataBase;
 
@@ -268,4 +268,33 @@ public interface ISupabaseAuth : IClientBase
     /// <param name="role">Role to validate.</param>
     /// <returns>True if the token is valid, false otherwise.</returns>
     bool IsValidToken(string token, string role);
+
+    /// <summary>
+    /// Updates the information for the current user.
+    /// </summary>
+    /// <param name="user">User info to update.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>User updated.</returns>
+    ValueTask<UserResponse<UserMetadataBase>> UpdateUserAsync(object user,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Updates the information for the current user.
+    /// </summary>
+    /// <param name="user">User info to update.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>User updated.</returns>
+    ValueTask<UserResponse<UserMetadataBase>> UpdateUserAsync(UserResponse<UserMetadataBase> user,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Updates the information for the current user.
+    /// </summary>
+    /// <param name="user">User info to update.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <typeparam name="TCustomMetadata">The type of custom metadata.</typeparam>
+    /// <returns>User updated.</returns>
+    ValueTask<UserResponse<TCustomMetadata>> UpdateUserAsync<TCustomMetadata>(object user,
+        CancellationToken cancellationToken = default)
+        where TCustomMetadata : UserMetadataBase;
 }

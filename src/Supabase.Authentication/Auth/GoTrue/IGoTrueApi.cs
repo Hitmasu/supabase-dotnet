@@ -19,9 +19,10 @@ public interface IGoTrueApi
     [Post("/signup")]
     Task<SignInResponse<TCustomMetadata>> SignUpAsync<TCustomMetadata>([Body] SignUpRequest request,
         CancellationToken cancellationToken) where TCustomMetadata : UserMetadataBase;
-    
+
     [Post("/signup")]
-    Task<SignInResponse<TCustomMetadata>> SignUpAsync<TCustomMetadata>(CancellationToken cancellationToken) where TCustomMetadata : UserMetadataBase;
+    Task<SignInResponse<TCustomMetadata>> SignUpAsync<TCustomMetadata>(CancellationToken cancellationToken)
+        where TCustomMetadata : UserMetadataBase;
 
     [Get("/settings")]
     Task<SettingsResponse> SettingsAsync(CancellationToken cancellationToken);
@@ -36,8 +37,12 @@ public interface IGoTrueApi
         CancellationToken cancellationToken) where TCustomMetadata : UserMetadataBase;
 
     [Put("/admin/users/{userId}")]
-    Task<UserResponse<TCustomMetadata>> UpdateUserAsync<TCustomMetadata>([Body] object request,
+    Task<UserResponse<TCustomMetadata>> UpdateUserAsAdminAsync<TCustomMetadata>([Body] object request,
         Guid userId,
+        CancellationToken cancellationToken) where TCustomMetadata : UserMetadataBase;
+
+    [Put("/users")]
+    Task<UserResponse<TCustomMetadata>> UpdateUserAsync<TCustomMetadata>([Body] object request,
         CancellationToken cancellationToken) where TCustomMetadata : UserMetadataBase;
 
     [Post("/admin/generate_link")]

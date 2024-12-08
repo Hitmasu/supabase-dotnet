@@ -13,6 +13,11 @@ public class UserResponse<TCustomMetadata> where TCustomMetadata : UserMetadataB
     
     public string BanDuration { get; set; }
 
+    /// <summary>
+    /// Only to update user password.
+    /// </summary>
+    public string Password { get; set; }
+
     [JsonPropertyName("email_confirmed_at")]
     public DateTime? EmailConfirmedAt { get; set; }
 
@@ -23,9 +28,11 @@ public class UserResponse<TCustomMetadata> where TCustomMetadata : UserMetadataB
     public DateTime LastSignInAt { get; set; }
 
     [JsonPropertyName("user_metadata")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public TCustomMetadata UserMetadata { get; set; }
 
     [JsonPropertyName("app_metadata")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public AppMetadataResponse AppMetadata { get; set; }
 
     public IReadOnlyList<IdentityResponse<TCustomMetadata>> Identities { get; set; }
