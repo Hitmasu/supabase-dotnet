@@ -320,4 +320,25 @@ public interface ISupabaseAuth : IClientBase
     ValueTask<UserResponse<TCustomMetadata>> UpdateUserAsync<TCustomMetadata>(
         UserResponse<TCustomMetadata> user,
         CancellationToken cancellationToken = default) where TCustomMetadata : UserMetadataBase;
+
+    /// <summary>
+    /// Refreshes the user's access token using their refresh token.
+    /// </summary>
+    /// <param name="refreshToken">The refresh token of the user.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <exception cref="ArgumentNullException">Thrown if the refresh token is null or empty.</exception>
+    /// <returns>User logged.</returns>
+    ValueTask<SignInResponse<UserMetadataBase>> RefreshTokenAsync(string refreshToken,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Refreshes the user's access token using their refresh token, and returns custom metadata.
+    /// </summary>
+    /// <typeparam name="TCustomMetadata">The type of custom metadata.</typeparam>
+    /// <param name="refreshToken">The refresh token of the user.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <exception cref="ArgumentNullException">Thrown if the refresh token is null or empty.</exception>
+    /// <returns>User logged.</returns>
+    ValueTask<SignInResponse<TCustomMetadata>> RefreshTokenAsync<TCustomMetadata>(string refreshToken,
+        CancellationToken cancellationToken = default) where TCustomMetadata : UserMetadataBase;
 }

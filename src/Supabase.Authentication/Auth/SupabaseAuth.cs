@@ -44,7 +44,8 @@ internal class SupabaseAuth : ClientBase<SupabaseAuth>, ISupabaseAuth
         if (!request.Email.IsNullOrEmpty() && !request.Phone.IsNullOrEmpty())
             throw new ArgumentException("E-mail and Phone cannot be filled at the same time.");
 
-        var response = await _goTrueApi.TokenAsync<TCustomMetadata>(request, "password", cancellationToken);
+        var response =
+            await _goTrueApi.TokenAsync<SignInRequest, TCustomMetadata>(request, "password", cancellationToken);
         return response;
     }
 
@@ -185,7 +186,34 @@ internal class SupabaseAuth : ClientBase<SupabaseAuth>, ISupabaseAuth
 
         return await _goTrueApi.UpdateUserAsync<TCustomMetadata>(user, cancellationToken);
     }
-    
+
+    /// <inheritdoc cref="ISupabaseAuth"/>
+    public ValueTask<SignInResponse<UserMetadataBase>> RefreshTokenAsync(string refreshToken,
+        CancellationToken cancellationToken = default) =>
+        RefreshTokenAsync<UserMetadataBase>(refreshToken, cancellationToken);
+
+    /// <inheritdoc cref="ISupabaseAuth"/>
+    public async ValueTask<SignInResponse<TCustomMetadata>> RefreshTokenAsync<TCustomMetadata>(string refreshToken,
+        CancellationToken cancellationToken = default) where TCustomMetadata : UserMetadataBase
+    {
+        var request = new RefreshTokenRequest(refreshToken);
+        return await RefreshTokenAsync<TCustomMetadata>(request, cancellationToken);
+    }
+
+    /// <inheritdoc cref="ISupabaseAuth"/>
+    private async ValueTask<SignInResponse<TCustomMetadata>> RefreshTokenAsync<TCustomMetadata>(
+        RefreshTokenRequest request,
+        CancellationToken cancellationToken = default) where TCustomMetadata : UserMetadataBase
+    {
+        if (request.RefreshToken.IsNullOrEmpty())
+            throw new ArgumentNullException(nameof(request.RefreshToken), "Refresh token cannot be null or empty.");
+
+        var response =
+            await _goTrueApi.TokenAsync<RefreshTokenRequest, TCustomMetadata>(request, "refresh_token",
+                cancellationToken);
+        return response;
+    }
+
     /// <inheritdoc cref="ISupabaseAuth"/>
     public ValueTask<UserResponse<UserMetadataBase>> UpdateUserAsync(object user,
         CancellationToken cancellationToken = default) =>

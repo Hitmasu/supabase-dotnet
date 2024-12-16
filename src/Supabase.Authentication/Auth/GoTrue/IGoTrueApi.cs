@@ -8,9 +8,11 @@ namespace Supabase.Authentication.Auth.GoTrue;
 public interface IGoTrueApi
 {
     [Post("/token")]
-    Task<SignInResponse<TCustomMetadata>> TokenAsync<TCustomMetadata>([Body] SignInRequest request,
+    Task<SignInResponse<TCustomMetadata>> TokenAsync<TRequest, TCustomMetadata>([Body] TRequest request,
         [AliasAs("grant_type")] [Query] string grantType,
-        CancellationToken cancellationToken) where TCustomMetadata : UserMetadataBase;
+        CancellationToken cancellationToken)
+        where TRequest : class
+        where TCustomMetadata : UserMetadataBase;
 
     [Post("/logout")]
     Task<SignInResponse<TCustomMetadata>> LogoutAsync<TCustomMetadata>(CancellationToken cancellationToken)
