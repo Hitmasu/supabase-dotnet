@@ -11,7 +11,7 @@
       <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
       <PackageLicenseExpression>MIT</PackageLicenseExpression>
       <PackageId>supabase-dotnet-authentication</PackageId>
-      <Version>1.0.5</Version>
+      <Version>1.1.0</Version>
       <RepositoryType>Git</RepositoryType>
       <PackageTags>Supabase</PackageTags>
     </PropertyGroup>
