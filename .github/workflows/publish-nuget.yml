@@ -28,6 +28,7 @@ jobs:
       run: dotnet build --configuration Release --no-restore
       
     - name: Test
+    working-directory: ./src
       run: dotnet test --no-restore --verbosity normal
       
     - name: Pack Supabase
