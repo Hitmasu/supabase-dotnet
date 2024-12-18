@@ -24,7 +24,8 @@ public class AuthHandler : DelegatingHandler
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
         CancellationToken cancellationToken)
     {
-        request.Headers.Add("apikey", _settings.ApiKey);
+        if (!request.Headers.Contains("apikey"))
+            request.Headers.Add("apikey", _settings.ApiKey);
 
         var token = GetTokenAuthentication(request);
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
