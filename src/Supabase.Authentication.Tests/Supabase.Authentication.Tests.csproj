@@ -25,6 +25,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Supabase.Authentication\Supabase.Authentication.csproj" />
+      <ProjectReference Include="..\Supabase.Faker\Supabase.Faker.csproj" />
       <ProjectReference Include="..\Supabase\Supabase.csproj" />
     </ItemGroup>
 

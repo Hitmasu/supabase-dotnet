@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Testcontainers" Version="4.1.0" />
+      <PackageReference Include="xunit.extensibility.core" Version="2.5.3" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <EmbeddedResource Include="Supabase.zip">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </EmbeddedResource>
+    </ItemGroup>
+
+    <Target Name="ZipSupabaseFolder" BeforeTargets="PreBuildEvent">
+        <ZipDirectory
+                SourceDirectory="$(ProjectDir)Supabase"
+                DestinationFile="$(ProjectDir)Supabase.zip"
+                Overwrite="true" />
+    </Target>
+
+</Project>

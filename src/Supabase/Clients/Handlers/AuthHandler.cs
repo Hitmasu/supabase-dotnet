@@ -1,7 +1,9 @@
 using System.Net.Http.Headers;
+using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Refit;
 using Supabase.Common.TokenResolver;
+using Supabase.Utils.Attributes;
 
 namespace Supabase.Clients.Handlers;
 
@@ -24,14 +26,28 @@ public class AuthHandler : DelegatingHandler
     {
         request.Headers.Add("apikey", _settings.ApiKey);
 
-        var tokenResolver = _serviceProvider!.GetService<ITokenResolver>();
-        
-        if (tokenResolver != null)
-        {
-            var token = tokenResolver.GetToken();
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-        }
+        var token = GetTokenAuthentication(request);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         return await base.SendAsync(request, cancellationToken);
+    }
+
+    private string GetTokenAuthentication(HttpRequestMessage request)
+    {
+        var restMethodInfo = request.Properties[HttpRequestMessageOptions.RestMethodInfo] as RestMethodInfo;
+        var requiresAdmin = restMethodInfo?.MethodInfo.GetCustomAttribute<RequiresAdminAttribute>() != null;
+
+        if (requiresAdmin)
+        {
+            var tokenAdminResolver = _serviceProvider!.GetService<ITokenAdminResolver>();
+
+            if (tokenAdminResolver != null)
+                return tokenAdminResolver.GetToken();
+
+            return _settings.ApiKey;
+        }
+
+        var tokenResolver = _serviceProvider!.GetService<ITokenResolver>();
+        return tokenResolver.GetToken();
     }
 }

@@ -2,10 +2,11 @@ using Refit;
 using Supabase.Authentication.Auth.GoTrue.Requests;
 using Supabase.Authentication.Auth.GoTrue.Responses;
 using Supabase.Common;
+using Supabase.Utils.Attributes;
 
 namespace Supabase.Authentication.Auth.GoTrue;
 
-public interface IGoTrueApi
+internal interface IGoTrueApi
 {
     [Post("/token")]
     Task<SignInResponse<TCustomMetadata>> TokenAsync<TRequest, TCustomMetadata>([Body] TRequest request,
@@ -18,26 +19,32 @@ public interface IGoTrueApi
     Task<SignInResponse<TCustomMetadata>> LogoutAsync<TCustomMetadata>(CancellationToken cancellationToken)
         where TCustomMetadata : UserMetadataBase;
 
+    [RequiresAdmin]
     [Post("/signup")]
     Task<SignInResponse<TCustomMetadata>> SignUpAsync<TCustomMetadata>([Body] SignUpRequest request,
         CancellationToken cancellationToken) where TCustomMetadata : UserMetadataBase;
 
+    [RequiresAdmin]
     [Post("/signup")]
     Task<SignInResponse<TCustomMetadata>> SignUpAsync<TCustomMetadata>(CancellationToken cancellationToken)
         where TCustomMetadata : UserMetadataBase;
 
+    [RequiresAdmin]
     [Get("/settings")]
     Task<SettingsResponse> SettingsAsync(CancellationToken cancellationToken);
 
+    [RequiresAdmin]
     [Post("/admin/users")]
     Task<UserResponse<TCustomMetadata>> CreateUserAsync<TCustomMetadata>(
         CreateUserRequest<TCustomMetadata> request,
         CancellationToken cancellationToken) where TCustomMetadata : UserMetadataBase;
 
+    [RequiresAdmin]
     [Get("/admin/users/{userId}")]
     Task<UserResponse<TCustomMetadata>> GetUserAsync<TCustomMetadata>(Guid userId,
         CancellationToken cancellationToken) where TCustomMetadata : UserMetadataBase;
 
+    [RequiresAdmin]
     [Put("/admin/users/{userId}")]
     Task<UserResponse<TCustomMetadata>> UpdateUserAsAdminAsync<TCustomMetadata>([Body] object request,
         Guid userId,
@@ -47,14 +54,17 @@ public interface IGoTrueApi
     Task<UserResponse<TCustomMetadata>> UpdateUserAsync<TCustomMetadata>([Body] object request,
         CancellationToken cancellationToken) where TCustomMetadata : UserMetadataBase;
 
+    [RequiresAdmin]
     [Post("/admin/generate_link")]
     Task<GenerateLinkResponse<TCustomMetadata>> GenerateLinkAsync<TCustomMetadata>(
         [Body] GenerateLinkRequest<TCustomMetadata> request,
         CancellationToken cancellationToken) where TCustomMetadata : UserMetadataBase;
 
+    [RequiresAdmin]
     [Post("/invite")]
     Task<InviteResponse> InviteAsync(InviteRequest request, CancellationToken cancellationToken);
 
+    [RequiresAdmin]
     [Post("/recover")]
     Task<InviteResponse> RecoverAsync(RecoverRequest request, CancellationToken cancellationToken);
 

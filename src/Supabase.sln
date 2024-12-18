@@ -6,6 +6,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Supabase.Authentication.Tes
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Supabase.Authentication", "Supabase.Authentication\Supabase.Authentication.csproj", "{F9E46121-C767-477E-9451-B4536CF9301B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Supabase.Faker", "Supabase.Faker\Supabase.Faker.csproj", "{A552F6CF-D28A-40BA-803F-62E0D547893F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,11 @@ Global
 		{F9E46121-C767-477E-9451-B4536CF9301B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F9E46121-C767-477E-9451-B4536CF9301B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F9E46121-C767-477E-9451-B4536CF9301B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A552F6CF-D28A-40BA-803F-62E0D547893F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A552F6CF-D28A-40BA-803F-62E0D547893F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A552F6CF-D28A-40BA-803F-62E0D547893F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A552F6CF-D28A-40BA-803F-62E0D547893F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
 	EndGlobalSection
 EndGlobal
