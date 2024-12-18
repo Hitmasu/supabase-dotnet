@@ -4,23 +4,33 @@ using Microsoft.Extensions.DependencyInjection;
 using Supabase.Authentication.Auth;
 using Supabase.Authentication.Auth.GoTrue.Enums;
 using Supabase.Authentication.Auth.GoTrue.Requests;
-using Supabase.Authentication.Tests.Clients.CustomData;
+using Supabase.Authentication.Tests.Auth.CustomData;
 using Supabase.Common.Exceptions;
 using Supabase.Common.TokenResolver;
 
-namespace Supabase.Authentication.Tests.Clients;
+namespace Supabase.Authentication.Tests.Auth;
 
-public class SupabaseAuth
+public class SupabaseAuthTests : IClassFixture<TestFixture>
 {
+    private readonly TokenResolver _tokenResolver;
+    private readonly ISupabaseAuth _supabaseAuth;
+
+    public SupabaseAuthTests(TestFixture fixture)
+    {
+        var serviceProvider = fixture.ServiceProvider;
+        _supabaseAuth = serviceProvider.GetRequiredService<ISupabaseAuth>();
+
+        _tokenResolver = (TokenResolver)serviceProvider.GetRequiredService<ITokenResolver>();
+    }
+
     [Fact]
     public async Task SignUpAsync_ValidParameters_ReturnsUser()
     {
-        var client = GetAuthClient();
-        var faker = new Faker();
+        var faker = new Bogus.Faker();
         var email = faker.Internet.Email().ToLower();
         var password = faker.Internet.Password();
 
-        var createdUser = await client.SignUpAsync(email, password);
+        var createdUser = await _supabaseAuth.SignUpAsync(email, password);
 
         createdUser.AccessToken.Should().NotBeNullOrEmpty();
         createdUser.TokenType.Should().NotBeNullOrEmpty();
@@ -70,8 +80,7 @@ public class SupabaseAuth
     [Fact]
     public async Task SignUpAsync_WithCustomData_ReturnUser()
     {
-        var client = GetAuthClient();
-        var faker = new Faker();
+        var faker = new Bogus.Faker();
         var email = faker.Internet.Email().ToLower();
         var password = faker.Internet.Password();
 
@@ -90,7 +99,7 @@ public class SupabaseAuth
             Address = address
         };
 
-        var createdUser = await client.SignUpAsync(email, password, customData);
+        var createdUser = await _supabaseAuth.SignUpAsync(email, password, customData);
         var user = createdUser.User;
         user.UserMetadata.Address.Should().NotBeNull();
         user.UserMetadata.Address.Should().BeEquivalentTo(address);
@@ -108,12 +117,11 @@ public class SupabaseAuth
     [Fact]
     public async Task SignUpWithPhoneAsync_ValidParameters_ReturnsUser()
     {
-        var client = GetAuthClient();
-        var faker = new Faker();
+        var faker = new Bogus.Faker();
         var phone = faker.Phone.PhoneNumber("55##########");
         var password = faker.Internet.Password();
 
-        var createdUser = await client.SignUpWithPhoneAsync(phone, password);
+        var createdUser = await _supabaseAuth.SignUpWithPhoneAsync(phone, password);
 
         createdUser.AccessToken.Should().NotBeNullOrEmpty();
         createdUser.TokenType.Should().NotBeNullOrEmpty();
@@ -163,8 +171,7 @@ public class SupabaseAuth
     [Fact]
     public async Task SignUpWithPhoneAsync_WithCustomData_ReturnsUser()
     {
-        var client = GetAuthClient();
-        var faker = new Faker();
+        var faker = new Bogus.Faker();
         var phone = faker.Phone.PhoneNumber("55##########");
         var password = faker.Internet.Password();
 
@@ -183,7 +190,7 @@ public class SupabaseAuth
             Address = address
         };
 
-        var createdUser = await client.SignUpWithPhoneAsync(phone, password, customData);
+        var createdUser = await _supabaseAuth.SignUpWithPhoneAsync(phone, password, customData);
         var user = createdUser.User;
         user.UserMetadata.Address.Should().NotBeNull();
         user.UserMetadata.Address.Should().BeEquivalentTo(address);
@@ -201,11 +208,10 @@ public class SupabaseAuth
     [Fact]
     public async Task SignUpAsync_EmptyEmail_ThrowsArgumentNullException()
     {
-        var client = GetAuthClient();
-        var faker = new Faker();
+        var faker = new Bogus.Faker();
         var password = faker.Internet.Password();
 
-        var action = async () => await client.SignUpAsync(string.Empty, password);
+        var action = async () => await _supabaseAuth.SignUpAsync(string.Empty, password);
 
         var ex = await action.Should().ThrowAsync<ArgumentNullException>();
         ex.WithMessage("E-mail or Phone cannot be null or empty.");
@@ -214,11 +220,10 @@ public class SupabaseAuth
     [Fact]
     public async Task SignUpAsync_EmptyPassword_ThrowsArgumentNullException()
     {
-        var client = GetAuthClient();
-        var faker = new Faker();
+        var faker = new Bogus.Faker();
         var email = faker.Internet.Email().ToLower();
 
-        var action = async () => await client.SignUpAsync(email, string.Empty);
+        var action = async () => await _supabaseAuth.SignUpAsync(email, string.Empty);
 
         var ex = await action.Should().ThrowAsync<ArgumentNullException>();
         ex.WithMessage("Password cannot be null or empty. (Parameter 'Password')");
@@ -227,14 +232,13 @@ public class SupabaseAuth
     [Fact]
     public async Task SignInAsync_ValidParameters_ReturnsAccessToken()
     {
-        var client = GetAuthClient();
-        var faker = new Faker();
+        var faker = new Bogus.Faker();
         var email = faker.Internet.Email().ToLower();
         var password = faker.Internet.Password();
 
-        await client.SignUpAsync(email, password);
+        await _supabaseAuth.SignUpAsync(email, password);
 
-        var accessToken = await client.SignInAsync(email, password);
+        var accessToken = await _supabaseAuth.SignInAsync(email, password);
 
         accessToken.Should().NotBeNull();
 
@@ -247,8 +251,7 @@ public class SupabaseAuth
     [Fact]
     public async Task SignInAsync_WithCustomData_ReturnsAccessTokenWithUser()
     {
-        var client = GetAuthClient();
-        var faker = new Faker();
+        var faker = new Bogus.Faker();
         var email = faker.Internet.Email().ToLower();
         var password = faker.Internet.Password();
 
@@ -267,8 +270,8 @@ public class SupabaseAuth
             Address = address
         };
 
-        await client.SignUpAsync(email, password, customData);
-        var authenticateUser = await client.SignInAsync<CustomUserMetadata>(email, password);
+        await _supabaseAuth.SignUpAsync(email, password, customData);
+        var authenticateUser = await _supabaseAuth.SignInAsync<CustomUserMetadata>(email, password);
         var user = authenticateUser.User;
         user.UserMetadata.Address.Should().NotBeNull();
         user.UserMetadata.Address.Should().BeEquivalentTo(address);
@@ -286,8 +289,7 @@ public class SupabaseAuth
     [Fact]
     public async Task SignInWithPhoneAsync_WithCustomData_ReturnsAccessTokenWithUser()
     {
-        var client = GetAuthClient();
-        var faker = new Faker();
+        var faker = new Bogus.Faker();
         var phone = faker.Phone.PhoneNumber("55##########");
         var password = faker.Internet.Password();
 
@@ -306,8 +308,8 @@ public class SupabaseAuth
             Address = address
         };
 
-        await client.SignUpWithPhoneAsync(phone, password, customData);
-        var authenticatedUser = await client.SignInWithPhoneAsync<CustomUserMetadata>(phone, password);
+        await _supabaseAuth.SignUpWithPhoneAsync(phone, password, customData);
+        var authenticatedUser = await _supabaseAuth.SignInWithPhoneAsync<CustomUserMetadata>(phone, password);
         var user = authenticatedUser.User;
         user.UserMetadata.Address.Should().NotBeNull();
         user.UserMetadata.Address.Should().BeEquivalentTo(address);
@@ -323,14 +325,13 @@ public class SupabaseAuth
     [Fact]
     public async Task SignInWithPhoneAsync_ValidParameters_ReturnsAccessToken()
     {
-        var client = GetAuthClient();
-        var faker = new Faker();
+        var faker = new Bogus.Faker();
         var phone = faker.Phone.PhoneNumber("55##########");
         var password = faker.Internet.Password();
 
-        await client.SignUpWithPhoneAsync(phone, password);
+        await _supabaseAuth.SignUpWithPhoneAsync(phone, password);
 
-        var accessToken = await client.SignInWithPhoneAsync(phone, password);
+        var accessToken = await _supabaseAuth.SignInWithPhoneAsync(phone, password);
 
         accessToken.Should().NotBeNull();
 
@@ -343,11 +344,10 @@ public class SupabaseAuth
     [Fact]
     public async Task SignInAsync_EmptyPassword_ThrowsArgumentNullException()
     {
-        var client = GetAuthClient();
-        var faker = new Faker();
+        var faker = new Bogus.Faker();
         var email = faker.Internet.Email().ToLower();
 
-        var action = async () => await client.SignInAsync(email, string.Empty);
+        var action = async () => await _supabaseAuth.SignInAsync(email, string.Empty);
 
         var ex = await action.Should().ThrowAsync<ArgumentNullException>();
         ex.WithMessage("Password cannot be null or empty. (Parameter 'Password')");
@@ -356,11 +356,10 @@ public class SupabaseAuth
     [Fact]
     public async Task SignInAsync_EmptyEmail_ThrowsArgumentNullException()
     {
-        var client = GetAuthClient();
-        var faker = new Faker();
+        var faker = new Bogus.Faker();
         var password = faker.Internet.Password();
 
-        var action = async () => await client.SignInAsync(string.Empty, password);
+        var action = async () => await _supabaseAuth.SignInAsync(string.Empty, password);
 
         var ex = await action.Should().ThrowAsync<ArgumentNullException>();
         ex.WithMessage("E-mail or Phone cannot be null or empty.");
@@ -369,11 +368,10 @@ public class SupabaseAuth
     [Fact]
     public async Task SignInWithPhoneAsync_EmptyPhone_ThrowsArgumentNullException()
     {
-        var client = GetAuthClient();
-        var faker = new Faker();
+        var faker = new Bogus.Faker();
         var password = faker.Internet.Password();
 
-        var action = async () => await client.SignInWithPhoneAsync(string.Empty, password);
+        var action = async () => await _supabaseAuth.SignInWithPhoneAsync(string.Empty, password);
 
         var ex = await action.Should().ThrowAsync<ArgumentNullException>();
         ex.WithMessage("E-mail or Phone cannot be null or empty.");
@@ -382,11 +380,10 @@ public class SupabaseAuth
     [Fact]
     public async Task SignInWithPhoneAsync_EmptyPassword_ThrowsArgumentNullException()
     {
-        var client = GetAuthClient();
-        var faker = new Faker();
+        var faker = new Bogus.Faker();
         var phone = faker.Phone.PhoneNumber("55##########");
 
-        var action = async () => await client.SignInWithPhoneAsync(phone, string.Empty);
+        var action = async () => await _supabaseAuth.SignInWithPhoneAsync(phone, string.Empty);
 
         var ex = await action.Should().ThrowAsync<ArgumentNullException>();
         ex.WithMessage("Password cannot be null or empty. (Parameter 'Password')");
@@ -395,20 +392,18 @@ public class SupabaseAuth
     [Fact]
     public async Task SignInAsync_InvalidPassword_ThrowsSupabaseException()
     {
-        var client = GetAuthClient();
-        var faker = new Faker();
+        var faker = new Bogus.Faker();
         var email = faker.Internet.Email().ToLower();
         var password = faker.Internet.Password(3);
 
-        var action = async () => await client.SignInAsync(email, password);
+        var action = async () => await _supabaseAuth.SignInAsync(email, password);
         await action.Should().ThrowAsync<SupabaseException>();
     }
 
     [Fact]
     public async Task GetSettingsAsync_ReturnsSettings()
     {
-        var client = GetAuthClient();
-        var settings = await client.GetSettingsAsync();
+        var settings = await _supabaseAuth.GetSettingsAsync();
 
         settings.Should().NotBeNull();
         settings.DisableSignup.Should().BeFalse();
@@ -436,8 +431,7 @@ public class SupabaseAuth
     [Fact]
     public async Task CreateUserAsync_ValidRequest_ReturnUserCreated()
     {
-        var client = GetAuthClient(await CreateResolverForAdminAsync());
-        var faker = new Faker();
+        var faker = new Bogus.Faker();
 
         var request = new CreateUserRequest()
         {
@@ -449,7 +443,7 @@ public class SupabaseAuth
             PhoneConfirm = false
         };
 
-        var user = await client.CreateUserAsync(request);
+        var user = await _supabaseAuth.CreateUserAsync(request);
 
         user.Id.Should().NotBeEmpty();
         user.Aud.Should().NotBeNullOrEmpty();
@@ -492,8 +486,7 @@ public class SupabaseAuth
     [Fact]
     public async Task CreateUserAsync_WithCustomData_ReturnUserCreated()
     {
-        var client = GetAuthClient(await CreateResolverForAdminAsync());
-        var faker = new Faker();
+        var faker = new Bogus.Faker();
 
         var address = new Address()
         {
@@ -519,7 +512,7 @@ public class SupabaseAuth
             }
         };
 
-        var user = await client.CreateUserAsync(request);
+        var user = await _supabaseAuth.CreateUserAsync(request);
         user.UserMetadata.Should().NotBeNull();
         user.UserMetadata.Address.Should().BeEquivalentTo(address);
     }
@@ -527,8 +520,7 @@ public class SupabaseAuth
     [Fact]
     public async Task UpdateUserAsync_TypedMetadata_UpdatedUser()
     {
-        var client = GetAuthClient(await CreateResolverForAdminAsync());
-        var faker = new Faker();
+        var faker = new Bogus.Faker();
 
         var address = new Address()
         {
@@ -554,7 +546,7 @@ public class SupabaseAuth
             }
         };
 
-        var user = await client.CreateUserAsync(request);
+        var user = await _supabaseAuth.CreateUserAsync(request);
 
         user.UserMetadata.Address = new Address()
         {
@@ -566,7 +558,7 @@ public class SupabaseAuth
             ZipCode = faker.Address.ZipCode()
         };
 
-        var updatedUser = await client.UpdateUserAsAdminAsync(user);
+        var updatedUser = await _supabaseAuth.UpdateUserAsAdminAsync(user);
 
         updatedUser.UserMetadata.Address.Should().BeEquivalentTo(user.UserMetadata.Address);
     }
@@ -574,8 +566,7 @@ public class SupabaseAuth
     [Fact]
     public async Task UpdateUserAsync_NoTypedMetadata_UpdatedUser()
     {
-        var client = GetAuthClient(await CreateResolverForAdminAsync());
-        var faker = new Faker();
+        var faker = new Bogus.Faker();
 
         var address = new Address()
         {
@@ -601,7 +592,7 @@ public class SupabaseAuth
             }
         };
 
-        var user = await client.CreateUserAsync(request);
+        var user = await _supabaseAuth.CreateUserAsync(request);
 
         user.UserMetadata.Address = new Address()
         {
@@ -624,15 +615,14 @@ public class SupabaseAuth
             }
         };
 
-        var updatedUser = await client.UpdateUserAsAdminAsync<CustomUserMetadata>(user.Id, updateObj);
+        var updatedUser = await _supabaseAuth.UpdateUserAsAdminAsync<CustomUserMetadata>(user.Id, updateObj);
         updatedUser.UserMetadata.Address.City.Should().Be(updateObj.user_metadata.address.city);
     }
 
     [Fact]
     public async Task GenerateLinkAsync_MagicLink_GeneratedLink()
     {
-        var client = GetAuthClient(await CreateResolverForAdminAsync());
-        var faker = new Faker();
+        var faker = new Bogus.Faker();
 
         var request = new GenerateLinkRequest<CustomUserMetadata>()
         {
@@ -652,7 +642,7 @@ public class SupabaseAuth
             }
         };
 
-        var link = await client.GenerateLinkAsync(request);
+        var link = await _supabaseAuth.GenerateLinkAsync(request);
 
         link.Should().NotBeNull();
         link.UserMetadata.Should().BeEquivalentTo(request.Data);
@@ -663,11 +653,10 @@ public class SupabaseAuth
     [Fact]
     public async Task InviteAsync_ValidEmail_InvitedInfo()
     {
-        var client = GetAuthClient(await CreateResolverForAdminAsync());
-        var faker = new Faker();
+        var faker = new Bogus.Faker();
         var email = faker.Internet.Email().ToLower();
 
-        var response = await client.InviteAsync(email);
+        var response = await _supabaseAuth.InviteAsync(email);
 
         response.Should().NotBeNull();
         response.Email.Should().Be(email);
@@ -680,27 +669,25 @@ public class SupabaseAuth
     [Fact]
     public async Task RecoverAsync_ValidEmail_SuccessRecover()
     {
-        var client = GetAuthClient();
-        var faker = new Faker();
+        var faker = new Bogus.Faker();
         var email = faker.Internet.Email().ToLower();
         var password = faker.Internet.Password().ToLower();
 
-        await client.SignUpAsync(email, password);
-
-        await client.RecoverAsync(email);
+        await _supabaseAuth.SignUpAsync(email, password);
+        await _supabaseAuth.RecoverAsync(email);
     }
 
     [Fact]
     public async Task GetUserAsync_ValidId_ReturnsUser()
     {
-        var client = GetAuthClient(await CreateResolverForAdminAsync());
-        var faker = new Faker();
+        var faker = new Bogus.Faker();
         var email = faker.Internet.Email().ToLower();
         var password = faker.Internet.Password();
 
-        var createdUser = await client.SignUpAsync(email, password);
+        var createdUser = await _supabaseAuth.SignUpAsync(email, password);
+        _tokenResolver.SetToken(createdUser.AccessToken);
 
-        var user = await client.GetUserAsync(createdUser.User.Id);
+        var user = await _supabaseAuth.GetUserAsync(createdUser.User.Id);
 
         user.Should().NotBeNull();
         user.Id.Should().Be(createdUser.User.Id);
@@ -709,8 +696,7 @@ public class SupabaseAuth
     [Fact]
     public async Task GetUserAsync_WithCustomData_ReturnsUser()
     {
-        var client = GetAuthClient(await CreateResolverForAdminAsync());
-        var faker = new Faker();
+        var faker = new Bogus.Faker();
         var email = faker.Internet.Email().ToLower();
         var password = faker.Internet.Password();
 
@@ -729,52 +715,13 @@ public class SupabaseAuth
             Address = address
         };
 
-        var createdUser = await client.SignUpAsync(email, password, customData);
+        var createdUser = await _supabaseAuth.SignUpAsync(email, password, customData);
 
-        var user = await client.GetUserAsync<CustomUserMetadata>(createdUser.User.Id);
+        _tokenResolver.SetToken(createdUser.AccessToken);
+
+        var user = await _supabaseAuth.GetUserAsync<CustomUserMetadata>(createdUser.User.Id);
 
         user.UserMetadata.Address.Should().NotBeNull();
         user.UserMetadata.Address.Should().BeEquivalentTo(address);
-    }
-
-    //Todo: Need a better way to test this.
-    // [Fact]
-    // public async Task GetCurrentUserAsync_ReturnsUser()
-    // {
-    //     var client = GetAuthClient();
-    //     var faker = new Faker();
-    //
-    //     var user = await client.GetCurrentUserAsync();
-    //
-    //     user.Should().NotBeNull();
-    // }
-
-    private async ValueTask<TokenResolver> CreateResolverForAdminAsync()
-    {
-        var token = await GetAdminTokenAsync();
-        var resolver = new TokenResolver
-        {
-            GetTokenDel = () => token
-        };
-        return resolver;
-    }
-
-    private async ValueTask<string> GetAdminTokenAsync()
-    {
-        return Environment.GetEnvironmentVariable("SUPABASE_SERVICE_ROLE");
-    }
-
-    private ISupabaseAuth GetAuthClient(TokenResolver? resolver = null)
-    {
-        var serviceCollection = new ServiceCollection();
-        serviceCollection.AddSupabase("http://localhost:54321", "test-api-key-generated");
-
-        if (resolver != null)
-            serviceCollection.AddScoped<ITokenResolver, TokenResolver>(_ => resolver);
-
-        var provider = serviceCollection.BuildServiceProvider();
-        var client = provider.GetRequiredService<ISupabaseAuth>();
-
-        return client;
     }
 }

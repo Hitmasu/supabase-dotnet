@@ -4,12 +4,28 @@ using Supabase.Common.TokenResolver;
 
 namespace Supabase.Authentication.Tests;
 
-public class TokenResolver : ITokenResolver
+internal class TokenResolver : ITokenResolver
 {
-    public Func<string> GetTokenDel { get; set; }
+    private static readonly AsyncLocal<TokenContext> CurrentContext = new();
 
-    public string GetToken()
+    public void SetToken(string token)
     {
-        return GetTokenDel();
+        var holder = CurrentContext.Value;
+
+        if (holder != null)
+            holder.Token = null;
+
+        if (!string.IsNullOrEmpty(token))
+            CurrentContext.Value = new TokenContext { Token = token };
+    }
+
+    public string? GetToken()
+    {
+        return CurrentContext.Value?.Token;
+    }
+
+    class TokenContext
+    {
+        public string Token { get; set; }
     }
 }

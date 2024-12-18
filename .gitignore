@@ -39,3 +39,4 @@ coverage*.info
 _ReSharper*/
 *.[Rr]e[Ss]harper
 .DS_Store
+src/Supabase.Faker/Supabase.zip

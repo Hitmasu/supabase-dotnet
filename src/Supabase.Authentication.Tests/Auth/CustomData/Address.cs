@@ -1,4 +1,4 @@
-namespace Supabase.Authentication.Tests.Clients.CustomData;
+namespace Supabase.Authentication.Tests.Auth.CustomData;
 
 public class Address
 {
