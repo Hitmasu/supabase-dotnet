@@ -1,4 +1,6 @@
+using System.Diagnostics.CodeAnalysis;
 using System.IO.Compression;
+using System.Net;
 using System.Reflection;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
@@ -10,20 +12,35 @@ namespace Supabase.Faker;
 
 public class SupabaseFaker : IAsyncLifetime
 {
+    public bool IsRunning { get; private set; }
     private readonly IContainer _authContainer;
     private readonly IContainer _dbContainer;
     private readonly IContainer _kongContainer;
     private readonly INetwork _network;
-    private readonly string _dataPath;
     private readonly Dictionary<string, string> _envVars;
+    private readonly IContainer _smtpContainer;
     private bool _disposed;
+    private readonly string _dataPath;
 
     public string Name => "Supabase Faker";
 
+    /// <summary>
+    /// Settings from Supabase.
+    /// </summary>
+    [MemberNotNullWhen(true, nameof(IsRunning))]
+    public SupabaseSettings? Supabase { get; private set; }
 
-    public SupabaseSettings Supabase { get; private set; }
-    public AuthenticationSettings Authentication { get; private set; }
-    public PostgresSettings Postgres { get; private set; }
+    /// <summary>
+    /// Settingds from Supabase Authentication.
+    /// </summary>
+    [MemberNotNullWhen(true, nameof(IsRunning))]
+    public AuthenticationSettings? Authentication { get; private set; }
+
+    /// <summary>
+    /// Settings from Supabase Postgres.
+    /// </summary>
+    [MemberNotNullWhen(true, nameof(IsRunning))]
+    public PostgresSettings? Postgres { get; private set; }
 
     public SupabaseFaker(bool shouldReuse = false)
     {
@@ -32,16 +49,13 @@ public class SupabaseFaker : IAsyncLifetime
 
         ExtractSupabaseFiles().Wait();
 
-        // Carrega variáveis do .env
         _envVars = LoadEnvironmentVariables();
 
-        // Cria uma rede Docker customizada
         _network = new NetworkBuilder()
             .WithReuse(shouldReuse)
             .WithName("supabase-network")
             .Build();
 
-        // Configuração do container do PostgreSQL
         _dbContainer = new ContainerBuilder()
             .WithReuse(shouldReuse)
             .WithImage("supabase/postgres:15.1.1.78")
@@ -68,7 +82,6 @@ public class SupabaseFaker : IAsyncLifetime
                 .UntilCommandIsCompleted("pg_isready", "-U", "postgres", "-h", "localhost"))
             .Build();
 
-        // Configuração do container do GoTrue (Auth)
         _authContainer = new ContainerBuilder()
             .WithReuse(shouldReuse)
             .WithImage("supabase/gotrue:v2.158.1")
@@ -107,7 +120,6 @@ public class SupabaseFaker : IAsyncLifetime
             .WithPortBinding(9999, true)
             .Build();
 
-        // Configuração do container Kong
         _kongContainer = new ContainerBuilder()
             .WithReuse(shouldReuse)
             .WithImage("kong:2.8.1")
@@ -136,6 +148,23 @@ public class SupabaseFaker : IAsyncLifetime
                         s|\$DASHBOARD_PASSWORD|'$DASHBOARD_PASSWORD'|g' /home/kong/kong.yml && \
                 /docker-entrypoint.sh kong docker-start")
             .Build();
+
+        _smtpContainer = new ContainerBuilder()
+            .WithReuse(shouldReuse)
+            .WithImage("gessnerfl/fake-smtp-server:2.4.1")
+            .WithName("supabase-smtp")
+            .WithNetwork(_network)
+            .WithNetworkAliases("smtp", "supabase-mail")
+            .WithPortBinding(5080, true)
+            .WithPortBinding(8025, true)
+            .WithPortBinding(8080, true)
+            .WithWaitStrategy(Wait.ForUnixContainer()
+                .UntilHttpRequestIsSucceeded(request =>
+                    request.ForPath("/api/emails")
+                        .ForPort(8080)
+                        .ForResponseMessageMatching(async response => response.StatusCode == HttpStatusCode.OK)
+                ))
+            .Build();
     }
 
     private Dictionary<string, string> LoadEnvironmentVariables()
@@ -145,7 +174,7 @@ public class SupabaseFaker : IAsyncLifetime
 
         foreach (var line in File.ReadAllLines(envPath))
         {
-            if (string.IsNullOrWhiteSpace(line) || line.StartsWith("#")) continue;
+            if (string.IsNullOrWhiteSpace(line) || line.StartsWith('#')) continue;
 
             var parts = line.Split('=', 2);
             if (parts.Length == 2)
@@ -174,16 +203,22 @@ public class SupabaseFaker : IAsyncLifetime
         archive.ExtractToDirectory(_dataPath, true);
     }
 
+    [MemberNotNull(nameof(Postgres))]
+    [MemberNotNull(nameof(Authentication))]
+    [MemberNotNull(nameof(Supabase))]
     public async Task InitializeAsync()
     {
         await _network.CreateAsync();
         await _dbContainer.StartAsync();
         await _authContainer.StartAsync();
         await _kongContainer.StartAsync();
+        await _smtpContainer.StartAsync();
 
         Postgres = new PostgresSettings(_envVars, _dbContainer);
         Authentication = new AuthenticationSettings(_envVars);
         Supabase = new SupabaseSettings(_kongContainer, _envVars);
+
+        IsRunning = true;
     }
 
     public async Task DisposeAsync()
@@ -194,10 +229,12 @@ public class SupabaseFaker : IAsyncLifetime
         await _dbContainer.DisposeAsync();
         await _kongContainer.DisposeAsync();
         await _network.DisposeAsync();
+        await _smtpContainer.DisposeAsync();
 
         if (Directory.Exists(_dataPath))
             Directory.Delete(_dataPath, true);
 
         _disposed = true;
+        IsRunning = false;
     }
 }

@@ -11,8 +11,10 @@ public class TestFixture : IDisposable
 
     public TestFixture()
     {
-        var faker = new SupabaseFaker(true);
+        var faker = new SupabaseFaker();
         faker.InitializeAsync().Wait();
+
+        var p = faker.Supabase.Uri;
         
         var collection = new ServiceCollection();
         
