@@ -31,13 +31,13 @@ jobs:
       working-directory: ./src
       run: dotnet test --no-restore --verbosity normal
       
-    - name: Pack Supabase
+    - name: Generate Nuget Packages
       working-directory: ./src
-      run: dotnet pack Supabase/Supabase.csproj --configuration Release --no-build --output ../nupkgs
-      
-    - name: Pack Supabase.Authentication
-      working-directory: ./src
-      run: dotnet pack Supabase.Authentication/Supabase.Authentication.csproj --configuration Release --no-build --output ../nupkgs
-      
-    - name: Push to NuGet
-      run: dotnet nuget push "nupkgs/*.nupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate 
+      run: dotnet publish -c Release
+
+    - name: Push Package
+      run: |
+        for package in $(find . -name "*.nupkg"); do
+          echo "Publishing package: $package"
+          dotnet nuget push "$package" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate 
+        done
