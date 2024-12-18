@@ -30,8 +30,8 @@ jobs:
     - name: Build
       run: dotnet build ./src/Supabase.sln --configuration Release --no-restore
       
-    #- name: Test
-    #  run: dotnet test ./src/Supabase.sln --no-build --configuration Release --verbosity normal
+    - name: Test
+      run: dotnet test ./src/Supabase.sln --no-build --configuration Release --verbosity normal
 
     - name: Check Project References
       run: |
