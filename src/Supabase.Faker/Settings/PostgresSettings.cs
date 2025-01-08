@@ -13,10 +13,14 @@ public class PostgresSettings : BaseSettings
 
     public string Username => "supabase_auth_admin";
     public string Password => EnvVars["POSTGRES_PASSWORD"];
-    public string Host => "supabase-db";
+    public string Host => "localhost";
     public ushort Port => _dbContainer.GetMappedPublicPort(EnvVars["POSTGRES_PORT"]);
     public string PostgresDatabase => EnvVars["POSTGRES_DB"];
 
     public string PostgresConnectionString =>
-        $"postgres://{Username}:{Password}@{Host}:{Port}/{PostgresDatabase}";
+        $"Host={Host};" +
+        $"Port={Port};" +
+        $"Database={PostgresDatabase};" +
+        $"Username={Username};" +
+        $"Password={Password};";
 }
