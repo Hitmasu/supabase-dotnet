@@ -19,18 +19,20 @@ public class PostgresSettings : BaseSettings
     /// <summary>
     /// External connection string to connect to the Postgres database outside from Docker.
     /// </summary>
-    public string PostgresExternalConnectionString =>
-        $"Host=localhost;" +
-        $"Port={Port};" +
-        $"Database={PostgresDatabase};" +
-        $"Username={Username};" +
-        $"Password={Password};";
-    
+    public string PostgresExternalConnectionString => GetConnectionString();
+
     /// <summary>
     /// Internal connection string to connect to the Postgres database inside from Docker.
     /// </summary>
-    public string PostgresInternalConnectionString =>
-        $"Host=supabase-db;" +
+    public string PostgresInternalConnectionString => GetConnectionString(true);
+
+    /// <summary>
+    /// Get connection string to connect to the Postgres database.
+    /// </summary>
+    /// <param name="isInternal"></param>
+    /// <returns></returns>
+    public string GetConnectionString(bool isInternal = false) =>
+        $"Host={(isInternal ? "supabase-db" : "localhost")};" +
         $"Port={Port};" +
         $"Database={PostgresDatabase};" +
         $"Username={Username};" +
