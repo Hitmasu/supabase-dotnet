@@ -13,10 +13,28 @@ public class PostgresSettings : BaseSettings
 
     public string Username => "supabase_auth_admin";
     public string Password => EnvVars["POSTGRES_PASSWORD"];
-    public string Host => "supabase-db";
     public ushort Port => _dbContainer.GetMappedPublicPort(EnvVars["POSTGRES_PORT"]);
     public string PostgresDatabase => EnvVars["POSTGRES_DB"];
 
-    public string PostgresConnectionString =>
-        $"postgres://{Username}:{Password}@{Host}:{Port}/{PostgresDatabase}";
+    /// <summary>
+    /// External connection string to connect to the Postgres database outside from Docker.
+    /// </summary>
+    public string PostgresExternalConnectionString => GetConnectionString();
+
+    /// <summary>
+    /// Internal connection string to connect to the Postgres database inside from Docker.
+    /// </summary>
+    public string PostgresInternalConnectionString => GetConnectionString(true);
+
+    /// <summary>
+    /// Get connection string to connect to the Postgres database.
+    /// </summary>
+    /// <param name="isInternal"></param>
+    /// <returns></returns>
+    public string GetConnectionString(bool isInternal = false) =>
+        $"Host={(isInternal ? "supabase-db" : "localhost")};" +
+        $"Port={Port};" +
+        $"Database={PostgresDatabase};" +
+        $"Username={Username};" +
+        $"Password={Password};";
 }
