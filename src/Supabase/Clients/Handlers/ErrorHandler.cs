@@ -1,6 +1,4 @@
-using System.Net.Http.Json;
 using System.Text.Json;
-using Supabase.Common;
 using Supabase.Common.Errors;
 using Supabase.Common.Exceptions;
 

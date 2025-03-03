@@ -19,6 +19,7 @@ public class SupabaseFaker : IAsyncLifetime
     private readonly INetwork _network;
     private readonly Dictionary<string, string> _envVars;
     private readonly IContainer _smtpContainer;
+    private readonly IContainer _restContainer;
     private bool _disposed;
     private readonly string _dataPath;
 
@@ -42,14 +43,24 @@ public class SupabaseFaker : IAsyncLifetime
     [MemberNotNullWhen(true, nameof(IsRunning))]
     public PostgresSettings? Postgres { get; private set; }
 
-    public SupabaseFaker(bool shouldReuse = false)
+    /// <summary>
+    /// Settings from Supabase REST API (PostgREST).
+    /// </summary>
+    [MemberNotNullWhen(true, nameof(IsRunning))]
+    public RestSettings? Rest { get; private set; }
+
+    public SupabaseFaker(bool shouldReuse = false, FakerConfig? config = null)
     {
+        config ??= new FakerConfig();
+
         _dataPath = Path.Combine(Path.GetTempPath(), "supabase-data");
         Directory.CreateDirectory(_dataPath);
 
         ExtractSupabaseFiles().Wait();
 
         _envVars = LoadEnvironmentVariables();
+
+        config.Envs = _envVars;
 
         _network = new NetworkBuilder()
             .WithReuse(shouldReuse)
@@ -118,6 +129,27 @@ public class SupabaseFaker : IAsyncLifetime
             .WithEnvironment("GOTRUE_EXTERNAL_PHONE_ENABLED", _envVars["ENABLE_PHONE_SIGNUP"])
             .WithEnvironment("GOTRUE_SMS_AUTOCONFIRM", _envVars["ENABLE_PHONE_AUTOCONFIRM"])
             .WithPortBinding(9999, true)
+            .Build();
+
+
+        _restContainer = new ContainerBuilder()
+            .WithReuse(shouldReuse)
+            .WithImage("postgrest/postgrest:v12.2.0")
+            .WithName("supabase-rest")
+            .WithNetwork(_network)
+            .WithNetworkAliases("rest", "supabase-rest")
+            .WithEnvironment("PGRST_DB_URI",
+                $"postgres://authenticator:{_envVars["POSTGRES_PASSWORD"]}@supabase-db:{_envVars["POSTGRES_PORT"]}/{_envVars["POSTGRES_DB"]}")
+            .WithEnvironment("PGRST_DB_SCHEMAS", config.GetRpcSchemas)
+            .WithEnvironment("PGRST_DB_ANON_ROLE", "anon")
+            .WithEnvironment("PGRST_JWT_SECRET", _envVars["JWT_SECRET"])
+            .WithEnvironment("PGRST_DB_USE_LEGACY_GUCS", "false")
+            .WithEnvironment("PGRST_APP_SETTINGS_JWT_SECRET", _envVars["JWT_SECRET"])
+            .WithEnvironment("PGRST_APP_SETTINGS_JWT_EXP", _envVars["JWT_EXPIRY"])
+            .WithPortBinding(3000, true)
+            .WithCommand("postgrest")
+            .WithWaitStrategy(Wait.ForUnixContainer()
+                .UntilPortIsAvailable(3000))
             .Build();
 
         _kongContainer = new ContainerBuilder()
@@ -206,17 +238,20 @@ public class SupabaseFaker : IAsyncLifetime
     [MemberNotNull(nameof(Postgres))]
     [MemberNotNull(nameof(Authentication))]
     [MemberNotNull(nameof(Supabase))]
+    [MemberNotNull(nameof(Rest))]
     public async Task InitializeAsync()
     {
         await _network.CreateAsync();
         await _dbContainer.StartAsync();
         await _authContainer.StartAsync();
+        await _restContainer.StartAsync();
         await _kongContainer.StartAsync();
         await _smtpContainer.StartAsync();
 
         Postgres = new PostgresSettings(_envVars, _dbContainer);
         Authentication = new AuthenticationSettings(_envVars);
         Supabase = new SupabaseSettings(_kongContainer, _envVars);
+        Rest = new RestSettings(_restContainer, _envVars);
 
         IsRunning = true;
     }
@@ -228,6 +263,7 @@ public class SupabaseFaker : IAsyncLifetime
         await _authContainer.DisposeAsync();
         await _dbContainer.DisposeAsync();
         await _kongContainer.DisposeAsync();
+        await _restContainer.DisposeAsync();
         await _network.DisposeAsync();
         await _smtpContainer.DisposeAsync();
 

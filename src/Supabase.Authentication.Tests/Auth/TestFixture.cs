@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Supabase.Common.TokenResolver;
 using Supabase.Faker;

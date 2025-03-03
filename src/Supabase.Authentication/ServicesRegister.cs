@@ -10,6 +10,7 @@ using Supabase.Authentication.Auth;
 using Supabase.Authentication.Auth.GoTrue;
 using Supabase.Clients.Handlers;
 using Supabase.Common.TokenResolver;
+using Supabase.Utils;
 using Supabase.Utils.Extensions;
 
 namespace Supabase.Authentication;
@@ -59,7 +60,8 @@ public static class ServicesRegister
         return authBuilder;
     }
 
-    public static IServiceCollection WithUserInjection<TUser>(this SupabaseAuthenticationBuilder builder)
+    public static IServiceCollection WithUserInjection<TUser>(this SupabaseAuthenticationBuilder builder,
+        JsonSerializerOptions? jsonOptions = null)
         where TUser : class
     {
         var services = builder.Services;
@@ -80,10 +82,8 @@ public static class ServicesRegister
             if (userMetadata == null)
                 throw new Exception("User metadata not found in JWT.");
 
-            var user = JsonSerializer.Deserialize<TUser>(userMetadata, new JsonSerializerOptions()
-            {
-                PropertyNameCaseInsensitive = true
-            });
+            var options = jsonOptions ?? JsonGlobal.JsonSerializerOptions;
+            var user = JsonSerializer.Deserialize<TUser>(userMetadata, options);
 
             return user!;
         });

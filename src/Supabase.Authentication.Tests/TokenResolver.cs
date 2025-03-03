@@ -1,5 +1,3 @@
-using Npgsql;
-using Supabase.Common;
 using Supabase.Common.TokenResolver;
 
 namespace Supabase.Authentication.Tests;
