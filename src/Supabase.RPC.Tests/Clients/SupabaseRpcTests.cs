@@ -99,7 +99,7 @@ public class SupabaseRpcTests : IClassFixture<TestFixture>
         var message = _faker.Lorem.Sentence();
 
         // Act
-        Func<Task> action = () => _supabaseRpc.CallAsync("log_message", new { message });
+        var action = async () => await _supabaseRpc.CallAsync("log_message", new { message });
 
         // Assert
         await action.Should().NotThrowAsync();
@@ -129,7 +129,7 @@ public class SupabaseRpcTests : IClassFixture<TestFixture>
         var nonExistentFunction = $"non_existent_function_{_faker.Random.AlphaNumeric(10)}";
 
         // Act
-        var action = () => _supabaseRpc.CallAsync<object>(nonExistentFunction, new { });
+        var action = async () => await _supabaseRpc.CallAsync<object>(nonExistentFunction, new { });
 
         // Assert
         await action.Should().ThrowAsync<Exception>()

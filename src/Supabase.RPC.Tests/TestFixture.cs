@@ -140,7 +140,7 @@ public class TestFixture : IDisposable
 
     public void Dispose()
     {
-        _faker.DisposeAsync().Wait();
+        //_faker.DisposeAsync().Wait();
     }
 }
 

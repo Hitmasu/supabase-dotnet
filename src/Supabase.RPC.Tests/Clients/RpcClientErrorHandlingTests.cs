@@ -152,7 +152,7 @@ public class RpcClientErrorHandlingTests : IClassFixture<TestFixture>
         var errorMessage = _faker.Lorem.Sentence();
 
         // Act
-        Func<Task> action = () => _supabaseRpc.CallAsync<object>("throw_business_error", new { error_message = errorMessage });
+        var action = async () => await _supabaseRpc.CallAsync<object>("throw_business_error", new { error_message = errorMessage });
 
         // Assert
         await action.Should().ThrowAsync<Exception>()
