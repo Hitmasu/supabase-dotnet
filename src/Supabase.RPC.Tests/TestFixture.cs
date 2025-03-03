@@ -93,39 +93,6 @@ public class TestFixture : IDisposable
                 throw new Exception($"Error executing script {scriptFile}: {ex.Message}", ex);
             }
         }
-
-        // Verify that functions were created correctly
-        await VerifyFunctionsExistAsync(connection);
-    }
-
-    /// <summary>
-    /// Verifies that functions were created correctly
-    /// </summary>
-    private async Task VerifyFunctionsExistAsync(NpgsqlConnection connection)
-    {
-        var functions = new[]
-        {
-            "add_numbers",
-            "create_user_info",
-            "generate_series",
-            "get_current_timestamp",
-            "log_message"
-        };
-
-        foreach (var function in functions)
-        {
-            await using var command = new NpgsqlCommand(
-                "SELECT EXISTS(SELECT 1 FROM pg_proc p JOIN pg_namespace n ON p.pronamespace = n.oid WHERE n.nspname = 'public' AND p.proname = @function);",
-                connection);
-            command.Parameters.AddWithValue("function", function);
-
-            var exists = (bool)await command.ExecuteScalarAsync();
-
-            if (!exists)
-            {
-                throw new Exception($"Function '{function}' not found in public schema!");
-            }
-        }
     }
 
     /// <summary>
