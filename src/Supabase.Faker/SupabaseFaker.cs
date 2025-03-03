@@ -132,8 +132,7 @@ public class SupabaseFaker : IAsyncLifetime
             .WithEnvironment("GOTRUE_SMS_AUTOCONFIRM", _envVars["ENABLE_PHONE_AUTOCONFIRM"])
             .WithPortBinding(9999, true)
             .Build();
-
-
+        
         _restContainer = new ContainerBuilder()
             .WithReuse(shouldReuse)
             .WithImage("postgrest/postgrest:v12.2.0")
@@ -149,6 +148,8 @@ public class SupabaseFaker : IAsyncLifetime
             .WithEnvironment("PGRST_APP_SETTINGS_JWT_SECRET", _envVars["JWT_SECRET"])
             .WithEnvironment("PGRST_APP_SETTINGS_JWT_EXP", _envVars["JWT_EXPIRY"])
             .WithPortBinding(3000, true)
+            .WithWaitStrategy(Wait.ForUnixContainer()
+                .UntilCommandIsCompleted("sleep 5"))
             .Build();
 
         _kongContainer = new ContainerBuilder()
