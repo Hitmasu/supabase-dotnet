@@ -16,8 +16,7 @@ internal interface IGoTrueApi
         where TCustomMetadata : UserMetadataBase;
 
     [Post("/logout")]
-    Task<SignInResponse<TCustomMetadata>> LogoutAsync<TCustomMetadata>(CancellationToken cancellationToken)
-        where TCustomMetadata : UserMetadataBase;
+    Task LogoutAsync(CancellationToken cancellationToken);
 
     [RequiresAdmin]
     [Post("/signup")]

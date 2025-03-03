@@ -103,10 +103,8 @@ internal class SupabaseAuth : ClientBase<SupabaseAuth>, ISupabaseAuth
     }
 
     /// <inheritdoc cref="ISupabaseAuth"/>
-    public async ValueTask LogoutAsync(CancellationToken cancellationToken = default)
-    {
-        await _goTrueApi.LogoutAsync<UserMetadataBase>(cancellationToken);
-    }
+    public async ValueTask LogoutAsync(CancellationToken cancellationToken = default) =>
+        await _goTrueApi.LogoutAsync(cancellationToken);
 
     /// <inheritdoc cref="ISupabaseAuth"/>
     public ValueTask<SignInResponse<UserMetadataBase>> SignUpAsync(string email, string password,
