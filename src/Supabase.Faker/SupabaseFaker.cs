@@ -147,9 +147,6 @@ public class SupabaseFaker : IAsyncLifetime
             .WithEnvironment("PGRST_APP_SETTINGS_JWT_SECRET", _envVars["JWT_SECRET"])
             .WithEnvironment("PGRST_APP_SETTINGS_JWT_EXP", _envVars["JWT_EXPIRY"])
             .WithPortBinding(3000, true)
-            .WithCommand("postgrest")
-            .WithWaitStrategy(Wait.ForUnixContainer()
-                .UntilPortIsAvailable(3000))
             .Build();
 
         _kongContainer = new ContainerBuilder()
