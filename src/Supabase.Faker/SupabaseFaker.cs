@@ -168,8 +168,8 @@ public class SupabaseFaker : IAsyncLifetime
             .WithEnvironment("SUPABASE_SERVICE_KEY", _envVars["SERVICE_ROLE_KEY"])
             .WithEnvironment("DASHBOARD_USERNAME", _envVars["DASHBOARD_USERNAME"])
             .WithEnvironment("DASHBOARD_PASSWORD", _envVars["DASHBOARD_PASSWORD"])
-            .WithPortBinding(int.Parse(_envVars["KONG_HTTP_PORT"]), 8000)
-            .WithPortBinding(int.Parse(_envVars["KONG_HTTPS_PORT"]), 8443)
+            .WithPortBinding(int.Parse(_envVars["KONG_HTTP_PORT"]), true)
+            .WithPortBinding(int.Parse(_envVars["KONG_HTTPS_PORT"]), true)
             .WithBindMount($"{_dataPath}/volumes/api/kong.yml", "/home/kong/temp.yml")
             .WithEntrypoint("/bin/bash", "-c", @"
                 cp /home/kong/temp.yml /home/kong/kong.yml && \
