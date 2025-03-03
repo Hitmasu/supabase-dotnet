@@ -69,7 +69,7 @@ public class RpcClientSchemaTests : IClassFixture<TestFixture>
         var message = _faker.Lorem.Sentence();
 
         // Act
-        Func<Task> action = () => _rpcClient.CallAsync("log_message", new { message }, "public");
+        var action = async () => await _rpcClient.CallAsync("log_message", new { message }, "public");
 
         // Assert
         await action.Should().NotThrowAsync();
@@ -97,7 +97,7 @@ public class RpcClientSchemaTests : IClassFixture<TestFixture>
         var a = _faker.Random.Int(1, 100);
         var b = _faker.Random.Int(1, 100);
         var expectedSum = a + b;
-        
+
         // Create schema-specific client
         var publicSchemaClient = ((SupabaseRpc)_rpcClient).ForSchema("public");
 
@@ -135,7 +135,7 @@ public class RpcClientSchemaTests : IClassFixture<TestFixture>
         // Assert
         result.Should().BeCloseTo(DateTime.Now, TimeSpan.FromMinutes(1));
     }
-    
+
     /// <summary>
     /// Test that schema-specific functions are correctly called with the Content-Profile header
     /// </summary>
@@ -153,11 +153,11 @@ public class RpcClientSchemaTests : IClassFixture<TestFixture>
     public async Task CallAsync_WithAuthSchema_UsesCorrectHeader()
     {
         // Act
-        Func<Task> action = () => _rpcClient.CallAsync<object>("get_auth_user", new {}, "auth");
-        
+        var action = async () => await _rpcClient.CallAsync<object>("get_auth_user", new { }, "auth");
+
         // Assert
         // If the Accept-Profile header is working correctly, this should not throw a function not found error
         // The test might fail for other reasons (like auth.get_user doesn't exist), but not because of schema prefixing
         await action.Should().NotThrowAsync<Exception>(because: "the function should be found in the auth schema");
     }
-} 
+}
