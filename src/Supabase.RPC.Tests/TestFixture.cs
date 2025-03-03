@@ -23,14 +23,14 @@ namespace Supabase.RPC.Tests;
 /// </remarks>
 public class TestFixture : IDisposable
 {
-    public IServiceProvider ServiceProvider { get; set; }
+    internal IServiceProvider ServiceProvider { get; set; }
     private static SupabaseFaker _faker;
-    private static bool _isLoaded = false;
-    private static Lock _fakerLock = new Lock();
+    private static bool _isLoaded;
+    private static readonly Lock FakerLock = new();
 
     public TestFixture()
     {
-        lock (_fakerLock)
+        lock (FakerLock)
         {
             if (!_isLoaded)
             {
@@ -39,7 +39,7 @@ public class TestFixture : IDisposable
                     RpcSchemas = ["public", "auth"]
                 };
 
-                _faker = new SupabaseFaker(true,fakerConfig);
+                _faker = new SupabaseFaker(false,fakerConfig);
                 _faker.InitializeAsync().Wait();
 
                 // Execute SQL scripts to create RPC functions
@@ -173,7 +173,7 @@ public class TestFixture : IDisposable
 
     public void Dispose()
     {
-        // We don't need to dispose the faker here, as it is reused (shouldReuse = true)
+        _faker.DisposeAsync().Wait();
     }
 }
 

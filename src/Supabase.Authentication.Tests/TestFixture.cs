@@ -7,16 +7,17 @@ namespace Supabase.Authentication.Tests;
 public class TestFixture : IDisposable
 {
     public IServiceProvider ServiceProvider { get; set; }
+    private readonly SupabaseFaker _faker;
 
     public TestFixture()
     {
-        var faker = new SupabaseFaker(true);
-        faker.InitializeAsync().Wait();
+        _faker = new SupabaseFaker();
+        _faker.InitializeAsync().Wait();
         
         var collection = new ServiceCollection();
         
-        collection.AddSupabase(faker.Supabase.Uri, faker.Supabase.ServiceRoleKey)
-            .AddSupabaseAuthentication(faker.Authentication.JwtSecret);
+        collection.AddSupabase(_faker.Supabase.Uri, _faker.Supabase.ServiceRoleKey)
+            .AddSupabaseAuthentication(_faker.Authentication.JwtSecret);
         
         collection.AddScoped<ITokenResolver, TokenResolver>();
         
@@ -25,5 +26,6 @@ public class TestFixture : IDisposable
 
     public void Dispose()
     {
+        _faker.DisposeAsync().Wait();
     }
 }

@@ -27,9 +27,19 @@ jobs:
       working-directory: ./src
       run: dotnet build --configuration Release --no-restore
       
-    - name: Test
-      working-directory: ./src
-      run: dotnet test --no-restore --verbosity normal
+    - name: Run Tests Sequentially
+      run: |
+        # Encontra todos os projetos de teste no diretório src
+        for test_project in $(find ./src -name "*.csproj" -type f | grep -i "test"); do
+          echo "Running tests for: $test_project"
+          dotnet test "$test_project" --no-build --configuration Release --verbosity normal
+          if [ $? -ne 0 ]; then
+            echo "Tests failed for $test_project"
+            exit 1
+          fi
+          echo "Waiting 2 seconds before next test..."
+          sleep 2
+        done
       
     - name: Generate Nuget Packages
       working-directory: ./src
