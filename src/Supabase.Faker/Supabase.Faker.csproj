@@ -11,14 +11,14 @@
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageId>supabase-dotnet-faker</PackageId>
-        <Version>1.0.1</Version>
+        <Version>1.1.0</Version>
         <RepositoryType>Git</RepositoryType>
         <PackageTags>Supabase</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Testcontainers" Version="4.1.0" />
-      <PackageReference Include="xunit.extensibility.core" Version="2.9.2" />
+      <PackageReference Include="Testcontainers" Version="4.3.0" />
+      <PackageReference Include="xunit.extensibility.core" Version="2.9.3" />
     </ItemGroup>
 
     <ItemGroup>

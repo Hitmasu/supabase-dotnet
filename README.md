@@ -21,13 +21,14 @@ services.AddSupabase("https://yourapiurlsupabase.co", "apikey");
 **Modules**
 ------------
 
-| Module            | Interface     | Status           |
-| ----------------- | ------------- | ---------------- |
-| Auth - JWT GoTrue | ISupabaseAuth | ✅                |
-| Storage           | -             | 🏗️ In development |
-| Realtime          | -             | 🏗️ In development |
-| Postgrest         | -             | 🏗️ In development |
-| Functions         | -             | 🏗️ In development |
+| Module            | Interface      | Status           |
+| ----------------- | -------------- | ---------------- |
+| Auth - JWT GoTrue | ISupabaseAuth  | ✅               |
+| RPC               | ISupabaseRpc   | ✅               |
+| Storage           | -              | 🏗️ In development |
+| Realtime          | -              | 🏗️ In development |
+| Postgrest         | -              | 🏗️ In development |
+| Functions         | -              | 🏗️ In development |
 
 **Authentication**
 -----------------
@@ -49,6 +50,43 @@ public class MyService {
 ```
 
 All endpoints are mapped from here: https://github.com/supabase/auth#endpoints
+
+**Remote Procedure Calls (RPC)**
+-----------------
+
+To work with RPC on Supabase, inject the `ISupabaseRpc` interface in your constructor:
+
+```c#
+public class MyService {
+  private readonly ISupabaseRpc _rpcClient;
+  
+  public MyService(ISupabaseRpc rpcClient){
+    _rpcClient = rpcClient;
+  }
+  
+  // Call a function with parameters
+  public async Task<int> AddNumbersAsync(int a, int b){
+    return await _rpcClient.CallAsync<int>("add_numbers", new { a, b });
+  }
+  
+  // Call a function in a specific schema
+  public async Task<UserInfo> GetUserInfoAsync(string userId){
+    return await _rpcClient.CallAsync<UserInfo>("get_user_info", new { user_id = userId }, "auth");
+  }
+  
+  // Use a schema-specific client
+  public async Task ProcessUserDataAsync(UserData data){
+    var authClient = _rpcClient.ForSchema("auth");
+    await authClient.CallAsync("process_user_data", data);
+  }
+}
+```
+
+The RPC client supports:
+- Calling Postgres functions with parameters
+- Working with specific database schemas via the `schema` parameter or `ForSchema()` method
+- Handling scalar, object, and array return types
+- Proper error handling and validation
 
 **Token Resolver**
 -------------------

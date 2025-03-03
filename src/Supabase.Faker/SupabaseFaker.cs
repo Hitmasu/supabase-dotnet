@@ -19,8 +19,10 @@ public class SupabaseFaker : IAsyncLifetime
     private readonly INetwork _network;
     private readonly Dictionary<string, string> _envVars;
     private readonly IContainer _smtpContainer;
+    private readonly IContainer _restContainer;
     private bool _disposed;
     private readonly string _dataPath;
+    private readonly string _suffix;
 
     public string Name => "Supabase Faker";
 
@@ -42,8 +44,17 @@ public class SupabaseFaker : IAsyncLifetime
     [MemberNotNullWhen(true, nameof(IsRunning))]
     public PostgresSettings? Postgres { get; private set; }
 
-    public SupabaseFaker(bool shouldReuse = false)
+    /// <summary>
+    /// Settings from Supabase REST API (PostgREST).
+    /// </summary>
+    [MemberNotNullWhen(true, nameof(IsRunning))]
+    public RestSettings? Rest { get; private set; }
+
+    public SupabaseFaker(bool shouldReuse = false, FakerConfig? config = null)
     {
+        config ??= new FakerConfig();
+        _suffix = shouldReuse ? string.Empty : $"-{Guid.NewGuid().ToString("N").Substring(0, 8)}";
+
         _dataPath = Path.Combine(Path.GetTempPath(), "supabase-data");
         Directory.CreateDirectory(_dataPath);
 
@@ -51,15 +62,17 @@ public class SupabaseFaker : IAsyncLifetime
 
         _envVars = LoadEnvironmentVariables();
 
+        config.Envs = _envVars;
+
         _network = new NetworkBuilder()
             .WithReuse(shouldReuse)
-            .WithName("supabase-network")
+            .WithName($"supabase-network{_suffix}")
             .Build();
 
         _dbContainer = new ContainerBuilder()
             .WithReuse(shouldReuse)
             .WithImage("supabase/postgres:15.1.1.78")
-            .WithName("supabase-db")
+            .WithName($"supabase-db{_suffix}")
             .WithNetwork(_network)
             .WithNetworkAliases("db", "supabase-db", "database")
             .WithEnvironment("POSTGRES_PASSWORD", _envVars["POSTGRES_PASSWORD"])
@@ -85,7 +98,7 @@ public class SupabaseFaker : IAsyncLifetime
         _authContainer = new ContainerBuilder()
             .WithReuse(shouldReuse)
             .WithImage("supabase/gotrue:v2.158.1")
-            .WithName("supabase-auth")
+            .WithName($"supabase-auth{_suffix}")
             .WithNetwork(_network)
             .WithNetworkAliases("auth", "supabase-auth")
             .WithEnvironment("GOTRUE_DB_DATABASE_URL",
@@ -120,10 +133,28 @@ public class SupabaseFaker : IAsyncLifetime
             .WithPortBinding(9999, true)
             .Build();
 
+        _restContainer = new ContainerBuilder()
+            .WithReuse(shouldReuse)
+            .WithImage("postgrest/postgrest:v12.2.0")
+            .WithName($"supabase-rest{_suffix}")
+            .WithNetwork(_network)
+            .WithNetworkAliases("rest", "supabase-rest")
+            .WithEnvironment("PGRST_DB_URI",
+                $"postgres://authenticator:{_envVars["POSTGRES_PASSWORD"]}@supabase-db:{_envVars["POSTGRES_PORT"]}/{_envVars["POSTGRES_DB"]}")
+            .WithEnvironment("PGRST_DB_SCHEMAS", config.GetRpcSchemas)
+            .WithEnvironment("PGRST_DB_ANON_ROLE", "anon")
+            .WithEnvironment("PGRST_JWT_SECRET", _envVars["JWT_SECRET"])
+            .WithEnvironment("PGRST_DB_USE_LEGACY_GUCS", "false")
+            .WithEnvironment("PGRST_APP_SETTINGS_JWT_SECRET", _envVars["JWT_SECRET"])
+            .WithEnvironment("PGRST_APP_SETTINGS_JWT_EXP", _envVars["JWT_EXPIRY"])
+            .WithPortBinding(3000, true)
+            .WithCommand("postgrest")
+            .Build();
+
         _kongContainer = new ContainerBuilder()
             .WithReuse(shouldReuse)
             .WithImage("kong:2.8.1")
-            .WithName("supabase-kong")
+            .WithName($"supabase-kong{_suffix}")
             .WithNetwork(_network)
             .WithNetworkAliases("kong", "api")
             .WithEnvironment("KONG_DATABASE", "off")
@@ -137,8 +168,8 @@ public class SupabaseFaker : IAsyncLifetime
             .WithEnvironment("SUPABASE_SERVICE_KEY", _envVars["SERVICE_ROLE_KEY"])
             .WithEnvironment("DASHBOARD_USERNAME", _envVars["DASHBOARD_USERNAME"])
             .WithEnvironment("DASHBOARD_PASSWORD", _envVars["DASHBOARD_PASSWORD"])
-            .WithPortBinding(int.Parse(_envVars["KONG_HTTP_PORT"]), 8000)
-            .WithPortBinding(int.Parse(_envVars["KONG_HTTPS_PORT"]), 8443)
+            .WithPortBinding(int.Parse(_envVars["KONG_HTTP_PORT"]), true)
+            .WithPortBinding(int.Parse(_envVars["KONG_HTTPS_PORT"]), true)
             .WithBindMount($"{_dataPath}/volumes/api/kong.yml", "/home/kong/temp.yml")
             .WithEntrypoint("/bin/bash", "-c", @"
                 cp /home/kong/temp.yml /home/kong/kong.yml && \
@@ -152,7 +183,7 @@ public class SupabaseFaker : IAsyncLifetime
         _smtpContainer = new ContainerBuilder()
             .WithReuse(shouldReuse)
             .WithImage("gessnerfl/fake-smtp-server:2.4.1")
-            .WithName("supabase-smtp")
+            .WithName($"supabase-smtp{_suffix}")
             .WithNetwork(_network)
             .WithNetworkAliases("smtp", "supabase-mail")
             .WithPortBinding(5080, true)
@@ -206,17 +237,20 @@ public class SupabaseFaker : IAsyncLifetime
     [MemberNotNull(nameof(Postgres))]
     [MemberNotNull(nameof(Authentication))]
     [MemberNotNull(nameof(Supabase))]
+    [MemberNotNull(nameof(Rest))]
     public async Task InitializeAsync()
     {
         await _network.CreateAsync();
         await _dbContainer.StartAsync();
         await _authContainer.StartAsync();
+        await _restContainer.StartAsync();
         await _kongContainer.StartAsync();
         await _smtpContainer.StartAsync();
 
         Postgres = new PostgresSettings(_envVars, _dbContainer);
         Authentication = new AuthenticationSettings(_envVars);
         Supabase = new SupabaseSettings(_kongContainer, _envVars);
+        Rest = new RestSettings(_restContainer, _envVars);
 
         IsRunning = true;
     }
@@ -228,6 +262,7 @@ public class SupabaseFaker : IAsyncLifetime
         await _authContainer.DisposeAsync();
         await _dbContainer.DisposeAsync();
         await _kongContainer.DisposeAsync();
+        await _restContainer.DisposeAsync();
         await _network.DisposeAsync();
         await _smtpContainer.DisposeAsync();
 
