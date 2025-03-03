@@ -37,8 +37,8 @@ jobs:
             echo "Tests failed for $test_project"
             exit 1
           fi
-          echo "Waiting 2 seconds before next test..."
-          sleep 2
+          echo "Waiting 5 seconds before next test..."
+          sleep 5
         done
       
     - name: Generate Nuget Packages
