@@ -2,7 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Supabase.Common.TokenResolver;
 using Supabase.Faker;
 
-namespace Supabase.Authentication.Tests.Auth;
+namespace Supabase.Authentication.Tests;
 
 public class TestFixture : IDisposable
 {
@@ -10,7 +10,7 @@ public class TestFixture : IDisposable
 
     public TestFixture()
     {
-        var faker = new SupabaseFaker();
+        var faker = new SupabaseFaker(true);
         faker.InitializeAsync().Wait();
         
         var collection = new ServiceCollection();
