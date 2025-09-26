@@ -22,7 +22,6 @@ internal class SupabaseAuth : ClientBase<SupabaseAuth>, ISupabaseAuth
     private readonly TokenValidationParameters _tokenValidationParameters;
     private readonly ITokenResolver _tokenResolver;
     private readonly IGoTrueApi _goTrueApi;
-
     public SupabaseAuth(ILogger<SupabaseAuth> logger, IGoTrueApi goTrueApi, ITokenResolver tokenResolver,
         IOptionsMonitor<JwtBearerOptions> jwtOptions) : base(logger)
     {
@@ -340,7 +339,7 @@ internal class SupabaseAuth : ClientBase<SupabaseAuth>, ISupabaseAuth
 
         try
         {
-            var tokenHandler = new JwtSecurityTokenHandler();
+            var tokenHandler = new JwtSecurityTokenHandler();            
             tokenHandler.ValidateToken(token, _tokenValidationParameters, out var securityToken);
 
             if (string.IsNullOrEmpty(role))
@@ -352,6 +351,50 @@ internal class SupabaseAuth : ClientBase<SupabaseAuth>, ISupabaseAuth
         catch
         {
             return false;
+        }
+    }
+
+    /// <inheritdoc cref="ISupabaseAuth"/>
+    public ClaimsPrincipal? GetClaims(string? token = null)
+    {
+        try
+        {
+            var tokenToUse = token ?? _tokenResolver.GetToken();
+
+            if (string.IsNullOrEmpty(tokenToUse))
+                return null;
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var jwtToken = tokenHandler.ReadJwtToken(tokenToUse);
+
+            var identity = new ClaimsIdentity(jwtToken.Claims, "jwt");
+            return new ClaimsPrincipal(identity);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Failed to extract claims from JWT token");
+            return null;
+        }
+    }
+
+    /// <inheritdoc cref="ISupabaseAuth"/>
+    public async ValueTask<ClaimsPrincipal?> GetClaimsAsync(string? token = null, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var tokenToUse = token ?? _tokenResolver.GetToken();
+
+            if (string.IsNullOrEmpty(tokenToUse))
+                return null;
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var result = await tokenHandler.ValidateTokenAsync(tokenToUse, _tokenValidationParameters);
+            return result.IsValid ? new ClaimsPrincipal(result.ClaimsIdentity) : null;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Failed to validate claims, falling back to simple extraction");
+            return GetClaims(token);
         }
     }
 }
