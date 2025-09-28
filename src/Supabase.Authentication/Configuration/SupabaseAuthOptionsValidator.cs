@@ -18,13 +18,7 @@ public class SupabaseAuthOptionsValidator : IValidateOptions<SupabaseAuthOptions
             errors.Add("Supabase API Key is required");
 
         if (!Uri.TryCreate(options.Url, UriKind.Absolute, out _))
-            errors.Add("Supabase URL must be a valid absolute URI");
-
-        if (options.EnableAsymmetricKeys && string.IsNullOrWhiteSpace(options.JwtSecret))
-        {
-            // Asymmetric keys are enabled but no fallback JWT secret - this is okay
-            // We'll just log a warning
-        }
+            errors.Add("Supabase URL must be a valid absolute URI");        
 
         if (!options.EnableAsymmetricKeys && string.IsNullOrWhiteSpace(options.JwtSecret))
             errors.Add("JWT Secret is required when asymmetric keys are disabled");
