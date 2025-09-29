@@ -34,12 +34,17 @@ public static class ServicesRegister
 
         if (supabaseOptions == null)
             throw new InvalidOperationException($"Supabase configuration section '{configSectionName}' not found");
+        
+        builder.Settings.Issuer = supabaseOptions.Issuer;
+        builder.Settings.Audience = supabaseOptions.Audience;
+        builder.Settings.JwksUrl = supabaseOptions.JwksUrl;
+        builder.Settings.EnableAsymmetricKeys = true;
 
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         .AddJwtBearer(options =>
         {
             var configManager = new ConfigurationManager<JsonWebKeySet>(
-                supabaseOptions.JwksUrl,
+                builder.Settings.JwksUrl,
                 new SupabaseJwksRetriever(),
                 new HttpDocumentRetriever()
             );
@@ -50,7 +55,7 @@ public static class ServicesRegister
             configManager.RefreshInterval = TimeSpan.FromHours(1).Add(jitter);
             configManager.AutomaticRefreshInterval = TimeSpan.FromMinutes(30).Add(jitter);
 
-            options.TokenValidationParameters = CreateValidationParameters(supabaseOptions, configManager);           
+            options.TokenValidationParameters = CreateValidationParameters(builder.Settings, configManager);
         });
 
         services.AddAuthorization();
@@ -138,16 +143,16 @@ public static class ServicesRegister
     }
 
     private static TokenValidationParameters CreateValidationParameters(
-        SupabaseOptions supabaseOptions,
+        Settings settings,
         ConfigurationManager<JsonWebKeySet> configManager)
     {
         return new TokenValidationParameters
         {
             ValidateIssuerSigningKey = true,
             ValidateIssuer = true,
-            ValidIssuer = supabaseOptions.Issuer,
+            ValidIssuer = settings.Issuer,
             ValidateAudience = true,
-            ValidAudiences = [supabaseOptions.Audience, "authenticated"],
+            ValidAudiences = [settings.Audience, "authenticated"],
             ValidateLifetime = true,
             ClockSkew = TimeSpan.FromMinutes(5),
             RequireExpirationTime = true,
