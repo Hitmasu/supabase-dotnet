@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Supabase.Authentication.Auth.GoTrue.Requests;
 using Supabase.Authentication.Auth.GoTrue.Responses;
 using Supabase.Clients;
@@ -341,4 +342,19 @@ public interface ISupabaseAuth : IClientBase
     /// <returns>User logged.</returns>
     ValueTask<SignInResponse<TCustomMetadata>> RefreshTokenAsync<TCustomMetadata>(string refreshToken,
         CancellationToken cancellationToken = default) where TCustomMetadata : UserMetadataBase;
+
+    /// <summary>
+    /// Gets the claims from the JWT token without validating against the server.
+    /// </summary>
+    /// <param name="token">The JWT token to extract claims from. If null, uses the current user's token.</param>
+    /// <returns>Claims principal containing the JWT claims, or null if token is invalid.</returns>
+    ClaimsPrincipal? GetClaims(string? token = null);
+
+    /// <summary>
+    /// Gets the claims from the JWT token without validating against the server (async version).
+    /// </summary>
+    /// <param name="token">The JWT token to extract claims from. If null, uses the current user's token.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>Claims principal containing the JWT claims, or null if token is invalid.</returns>
+    ValueTask<ClaimsPrincipal?> GetClaimsAsync(string? token = null, CancellationToken cancellationToken = default);
 }
