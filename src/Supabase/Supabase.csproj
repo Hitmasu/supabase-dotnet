@@ -11,7 +11,7 @@
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageId>supabase-dotnet</PackageId>
-        <Version>1.2.0</Version>
+        <Version>1.2.1</Version>
         <RepositoryType>Git</RepositoryType>
         <PackageTags>Supabase</PackageTags>
     </PropertyGroup>
