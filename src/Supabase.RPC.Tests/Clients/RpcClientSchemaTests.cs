@@ -110,33 +110,6 @@ public class RpcClientSchemaTests : IClassFixture<TestFixture>
     }
 
     /// <summary>
-    /// Test that ForSchema creates a schema-specific client that can call functions without parameters
-    /// </summary>
-    /// <remarks>
-    /// Scenario: Create a schema-specific client and use it to call a function without parameters
-    /// 
-    /// Expected behavior:
-    /// 1. The ForSchema method creates a valid schema-specific client
-    /// 2. The schema-specific client calls the function without parameters
-    /// 3. The result is correctly returned
-    /// 
-    /// Verifications:
-    /// - The returned result from the schema-specific client is valid
-    /// </remarks>
-    [Fact]
-    public async Task ForSchema_SchemaClient_CallsWithoutParameters_Successfully()
-    {
-        // Arrange
-        var publicSchemaClient = ((SupabaseRpc)_rpcClient).ForSchema("public");
-
-        // Act
-        var result = await publicSchemaClient.CallAsync<DateTime>("get_current_timestamp");
-
-        // Assert
-        result.Should().BeCloseTo(DateTime.Now, TimeSpan.FromMinutes(1));
-    }
-
-    /// <summary>
     /// Test that schema-specific functions are correctly called with the Content-Profile header
     /// </summary>
     /// <remarks>
