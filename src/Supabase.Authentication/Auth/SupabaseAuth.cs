@@ -397,4 +397,49 @@ internal class SupabaseAuth : ClientBase<SupabaseAuth>, ISupabaseAuth
             return GetClaims(token);
         }
     }
+
+    /// <inheritdoc cref="ISupabaseAuth"/>
+    public async ValueTask<SignInWithOtpResponse> SignInWithOtpAsync(
+        string email,
+        SignInWithOtpOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (email.IsNullOrEmpty())
+            throw new ArgumentNullException(nameof(email), "Email cannot be null or empty.");
+
+        var request = new SignInWithOtpRequest
+        {
+            Email = email,
+            CreateUser = options?.ShouldCreateUser ?? true,
+            Data = options?.Data
+        };
+
+        return await _goTrueApi.SignInWithOtpAsync(request, cancellationToken);
+    }
+
+    /// <inheritdoc cref="ISupabaseAuth"/>
+    public async ValueTask<SignInResponse<TCustomMetadata>> VerifyOtpAsync<TCustomMetadata>(
+        string tokenHash,
+        string type = "email",
+        CancellationToken cancellationToken = default)
+        where TCustomMetadata : UserMetadataBase
+    {
+        if (tokenHash.IsNullOrEmpty())
+            throw new ArgumentNullException(nameof(tokenHash));
+
+        var request = new VerifyOtpRequest
+        {
+            TokenHash = tokenHash,
+            Type = type
+        };
+
+        return await _goTrueApi.VerifyOtpAsync<TCustomMetadata>(request, cancellationToken);
+    }
+
+    /// <inheritdoc cref="ISupabaseAuth"/>
+    public ValueTask<SignInResponse<UserMetadataBase>> VerifyOtpAsync(
+        string tokenHash,
+        string type = "email",
+        CancellationToken cancellationToken = default) =>
+        VerifyOtpAsync<UserMetadataBase>(tokenHash, type, cancellationToken);
 }
