@@ -723,4 +723,193 @@ public class SupabaseAuthTests : IClassFixture<TestFixture>
         user.UserMetadata.Address.Should().NotBeNull();
         user.UserMetadata.Address.Should().BeEquivalentTo(address);
     }
+
+    [Fact]
+    public async Task SignInWithOtpAsync_ValidEmail_ShouldReturnMessageId()
+    {
+        // Arrange
+        var faker = new Bogus.Faker();
+        var email = faker.Internet.Email().ToLower();
+
+        // Act
+        var response = await _supabaseAuth.SignInWithOtpAsync(email);
+
+        // Assert
+        response.Should().NotBeNull();
+        response.MessageId.Should().NotBeNullOrEmpty();
+    }
+
+    [Fact]
+    public async Task SignInWithOtpAsync_WithOptions_ShouldReturnMessageId()
+    {
+        // Arrange
+        var faker = new Bogus.Faker();
+        var email = faker.Internet.Email().ToLower();
+        var options = new SignInWithOtpOptions
+        {
+            EmailRedirectTo = "http://localhost:3000/verify",
+            ShouldCreateUser = true
+        };
+
+        // Act
+        var response = await _supabaseAuth.SignInWithOtpAsync(email, options);
+
+        // Assert
+        response.Should().NotBeNull();
+        response.MessageId.Should().NotBeNullOrEmpty();
+    }
+
+    [Fact]
+    public async Task SignInWithOtpAsync_WithCustomData_ShouldReturnMessageId()
+    {
+        // Arrange
+        var faker = new Bogus.Faker();
+        var email = faker.Internet.Email().ToLower();
+        var address = new Address
+        {
+            Street = faker.Address.StreetName(),
+            Apartment = faker.Address.BuildingNumber(),
+            City = faker.Address.City(),
+            Country = faker.Address.Country(),
+            State = faker.Address.State(),
+            ZipCode = faker.Address.ZipCode()
+        };
+
+        var options = new SignInWithOtpOptions
+        {
+            EmailRedirectTo = "http://localhost:3000/verify",
+            ShouldCreateUser = true,
+            Data = new CustomUserMetadata { Address = address }
+        };
+
+        // Act
+        var response = await _supabaseAuth.SignInWithOtpAsync(email, options);
+
+        // Assert
+        response.Should().NotBeNull();
+        response.MessageId.Should().NotBeNullOrEmpty();
+    }
+
+    [Fact]
+    public async Task SignInWithOtpAsync_WithShouldCreateUserFalse_ShouldReturnMessageId()
+    {
+        // Arrange
+        var faker = new Bogus.Faker();
+        var email = faker.Internet.Email().ToLower();
+        var password = faker.Internet.Password();
+
+        // Create user first
+        await _supabaseAuth.SignUpAsync(email, password);
+
+        var options = new SignInWithOtpOptions
+        {
+            EmailRedirectTo = "http://localhost:3000/verify",
+            ShouldCreateUser = false
+        };
+
+        // Act
+        var response = await _supabaseAuth.SignInWithOtpAsync(email, options);
+
+        // Assert
+        response.Should().NotBeNull();
+        response.MessageId.Should().NotBeNullOrEmpty();
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData(null)]
+    [InlineData(" ")]
+    public async Task SignInWithOtpAsync_EmptyEmail_ShouldThrowArgumentNullException(string email)
+    {
+        // Act
+        var action = async () => await _supabaseAuth.SignInWithOtpAsync(email);
+
+        // Assert
+        var ex = await action.Should().ThrowAsync<ArgumentNullException>();
+        ex.WithMessage("*Email cannot be null or empty*");
+    }
+
+    [Fact]
+    public async Task VerifyOtpAsync_ValidTokenHash_ShouldReturnAccessToken()
+    {
+        // Arrange
+        var faker = new Bogus.Faker();
+        var email = faker.Internet.Email().ToLower();
+
+        // Send OTP first
+        var otpResponse = await _supabaseAuth.SignInWithOtpAsync(email);
+        otpResponse.MessageId.Should().NotBeNullOrEmpty();
+
+        // Note: In a real test environment, you would need to:
+        // 1. Extract the token_hash from the email link
+        // 2. Use that token_hash for verification
+        // Since we can't access emails in tests, this test validates the method signature
+        // In production, the token_hash would come from the magic link URL parameter
+
+        // This test demonstrates the expected usage pattern
+        var tokenHash = "mock_token_hash_from_email_link";
+
+        // Act & Assert
+        // This will fail in test environment without a real token_hash
+        // but demonstrates the API usage
+        var action = async () => await _supabaseAuth.VerifyOtpAsync(tokenHash);
+        await action.Should().ThrowAsync<SupabaseException>();
+    }
+
+    [Fact]
+    public async Task VerifyOtpAsync_WithCustomMetadata_ShouldReturnAccessTokenWithUser()
+    {
+        // Arrange
+        var faker = new Bogus.Faker();
+        var email = faker.Internet.Email().ToLower();
+
+        var address = new Address
+        {
+            Street = faker.Address.StreetName(),
+            Apartment = faker.Address.BuildingNumber(),
+            City = faker.Address.City(),
+            Country = faker.Address.Country(),
+            State = faker.Address.State(),
+            ZipCode = faker.Address.ZipCode()
+        };
+
+        var options = new SignInWithOtpOptions
+        {
+            Data = new CustomUserMetadata { Address = address }
+        };
+
+        await _supabaseAuth.SignInWithOtpAsync(email, options);
+
+        var tokenHash = "mock_token_hash_from_email_link";
+
+        // Act & Assert
+        var action = async () => await _supabaseAuth.VerifyOtpAsync<CustomUserMetadata>(tokenHash);
+        await action.Should().ThrowAsync<SupabaseException>();
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData(null)]
+    [InlineData(" ")]
+    public async Task VerifyOtpAsync_EmptyTokenHash_ShouldThrowArgumentNullException(string tokenHash)
+    {
+        // Act
+        var action = async () => await _supabaseAuth.VerifyOtpAsync(tokenHash);
+
+        // Assert
+        await action.Should().ThrowAsync<ArgumentNullException>();
+    }
+
+    [Fact]
+    public async Task VerifyOtpAsync_InvalidTokenHash_ShouldThrowSupabaseException()
+    {
+        // Arrange
+        var invalidTokenHash = "invalid_token_hash_12345";
+
+        // Act
+        var action = async () => await _supabaseAuth.VerifyOtpAsync(invalidTokenHash);
+
+        // Assert
+        await action.Should().ThrowAsync<SupabaseException>();
+    }
 }

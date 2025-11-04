@@ -357,4 +357,35 @@ public interface ISupabaseAuth : IClientBase
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>Claims principal containing the JWT claims, or null if token is invalid.</returns>
     ValueTask<ClaimsPrincipal?> GetClaimsAsync(string? token = null, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Sends a magic link to the user's email address for passwordless authentication.
+    /// </summary>
+    /// <param name="email">The email address to send the magic link to.</param>
+    /// <param name="options">Optional configuration for the magic link.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>Response containing message ID.</returns>
+    ValueTask<SignInWithOtpResponse> SignInWithOtpAsync(string email, SignInWithOtpOptions? options = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Verifies the OTP token hash received from the magic link.
+    /// </summary>
+    /// <typeparam name="TCustomMetadata">The type of custom metadata.</typeparam>
+    /// <param name="tokenHash">The token hash from the magic link URL.</param>
+    /// <param name="type">The type of verification (default: "email").</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>Sign in response with access tokens.</returns>
+    ValueTask<SignInResponse<TCustomMetadata>> VerifyOtpAsync<TCustomMetadata>(string tokenHash, string type = "email",
+        CancellationToken cancellationToken = default) where TCustomMetadata : UserMetadataBase;
+
+    /// <summary>
+    /// Verifies the OTP token hash received from the magic link.
+    /// </summary>
+    /// <param name="tokenHash">The token hash from the magic link URL.</param>
+    /// <param name="type">The type of verification (default: "email").</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>Sign in response with access tokens.</returns>
+    ValueTask<SignInResponse<UserMetadataBase>> VerifyOtpAsync(string tokenHash, string type = "email",
+        CancellationToken cancellationToken = default);
 }

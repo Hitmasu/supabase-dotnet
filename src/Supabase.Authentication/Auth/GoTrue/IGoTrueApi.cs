@@ -74,4 +74,12 @@ internal interface IGoTrueApi
     [Put("/user")]
     Task<UserResponse<TCustomMetadata>> UpdateCurrentUserAsync<TCustomMetadata>([Body] object request,
         CancellationToken cancellationToken) where TCustomMetadata : UserMetadataBase;
+
+    [Post("/otp")]
+    Task<SignInWithOtpResponse> SignInWithOtpAsync([Body] SignInWithOtpRequest request,
+        CancellationToken cancellationToken);
+
+    [Post("/verify")]
+    Task<SignInResponse<TCustomMetadata>> VerifyOtpAsync<TCustomMetadata>([Body] VerifyOtpRequest request,
+        CancellationToken cancellationToken) where TCustomMetadata : UserMetadataBase;
 }
