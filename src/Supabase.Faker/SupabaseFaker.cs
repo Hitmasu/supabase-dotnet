@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO.Compression;
 using System.Net;
 using System.Reflection;
+using System.Threading;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
 using DotNet.Testcontainers.Networks;
@@ -12,6 +13,7 @@ namespace Supabase.Faker;
 
 public class SupabaseFaker : IAsyncLifetime
 {
+    private static readonly SemaphoreSlim ExtractLock = new(1, 1);
     public bool IsRunning { get; private set; }
     private readonly IContainer _authContainer;
     private readonly IContainer _dbContainer;
@@ -55,10 +57,10 @@ public class SupabaseFaker : IAsyncLifetime
         config ??= new FakerConfig();
         _suffix = shouldReuse ? string.Empty : $"-{Guid.NewGuid().ToString("N").Substring(0, 8)}";
 
-        _dataPath = Path.Combine(Path.GetTempPath(), "supabase-data");
+        _dataPath = Path.Combine(Path.GetTempPath(), $"supabase-data{_suffix}");
         Directory.CreateDirectory(_dataPath);
 
-        ExtractSupabaseFiles().Wait();
+        EnsureSupabaseFilesExtracted().GetAwaiter().GetResult();
 
         _envVars = LoadEnvironmentVariables();
 
@@ -71,7 +73,7 @@ public class SupabaseFaker : IAsyncLifetime
 
         _dbContainer = new ContainerBuilder()
             .WithReuse(shouldReuse)
-            .WithImage("supabase/postgres:15.1.1.78")
+            .WithImage("supabase/postgres:15.8.1.085")
             .WithName($"supabase-db{_suffix}")
             .WithNetwork(_network)
             .WithNetworkAliases("db", "supabase-db", "database")
@@ -97,7 +99,7 @@ public class SupabaseFaker : IAsyncLifetime
 
         _authContainer = new ContainerBuilder()
             .WithReuse(shouldReuse)
-            .WithImage("supabase/gotrue:v2.158.1")
+            .WithImage("supabase/gotrue:v2.186.0")
             .WithName($"supabase-auth{_suffix}")
             .WithNetwork(_network)
             .WithNetworkAliases("auth", "supabase-auth")
@@ -131,11 +133,17 @@ public class SupabaseFaker : IAsyncLifetime
             .WithEnvironment("GOTRUE_EXTERNAL_PHONE_ENABLED", _envVars["ENABLE_PHONE_SIGNUP"])
             .WithEnvironment("GOTRUE_SMS_AUTOCONFIRM", _envVars["ENABLE_PHONE_AUTOCONFIRM"])
             .WithPortBinding(9999, true)
+            .WithWaitStrategy(Wait.ForUnixContainer()
+                .UntilHttpRequestIsSucceeded(request =>
+                    request.ForPath("/health")
+                        .ForPort(9999)
+                        .ForResponseMessageMatching(async response => response.StatusCode == HttpStatusCode.OK)
+                ))
             .Build();
 
         _restContainer = new ContainerBuilder()
             .WithReuse(shouldReuse)
-            .WithImage("postgrest/postgrest:v12.2.0")
+            .WithImage("postgrest/postgrest:v14.5")
             .WithName($"supabase-rest{_suffix}")
             .WithNetwork(_network)
             .WithNetworkAliases("rest", "supabase-rest")
@@ -161,7 +169,7 @@ public class SupabaseFaker : IAsyncLifetime
             .WithEnvironment("KONG_DECLARATIVE_CONFIG", "/home/kong/kong.yml")
             .WithEnvironment("KONG_DNS_ORDER", "LAST,A,CNAME")
             .WithEnvironment("KONG_DNS_RESOLVER", "127.0.0.11")
-            .WithEnvironment("KONG_PLUGINS", "request-transformer,cors,key-auth,acl,basic-auth")
+            .WithEnvironment("KONG_PLUGINS", "request-transformer,cors,key-auth,acl,basic-auth,request-termination,ip-restriction")
             .WithEnvironment("KONG_NGINX_PROXY_PROXY_BUFFER_SIZE", "160k")
             .WithEnvironment("KONG_NGINX_PROXY_PROXY_BUFFERS", "64 160k")
             .WithEnvironment("SUPABASE_ANON_KEY", _envVars["ANON_KEY"])
@@ -178,23 +186,20 @@ public class SupabaseFaker : IAsyncLifetime
                         s|\$DASHBOARD_USERNAME|'$DASHBOARD_USERNAME'|g; \
                         s|\$DASHBOARD_PASSWORD|'$DASHBOARD_PASSWORD'|g' /home/kong/kong.yml && \
                 /docker-entrypoint.sh kong docker-start")
+            .WithWaitStrategy(Wait.ForUnixContainer()
+                .UntilPortIsAvailable(8000))
             .Build();
 
         _smtpContainer = new ContainerBuilder()
             .WithReuse(shouldReuse)
-            .WithImage("gessnerfl/fake-smtp-server:2.4.1")
+            .WithImage("inbucket/inbucket:3.0.3")
             .WithName($"supabase-smtp{_suffix}")
             .WithNetwork(_network)
             .WithNetworkAliases("smtp", "supabase-mail")
-            .WithPortBinding(5080, true)
-            .WithPortBinding(8025, true)
-            .WithPortBinding(8080, true)
+            .WithPortBinding(2500, true)
+            .WithPortBinding(9000, true)
             .WithWaitStrategy(Wait.ForUnixContainer()
-                .UntilHttpRequestIsSucceeded(request =>
-                    request.ForPath("/api/emails")
-                        .ForPort(8080)
-                        .ForResponseMessageMatching(async response => response.StatusCode == HttpStatusCode.OK)
-                ))
+                .UntilPortIsAvailable(2500))
             .Build();
     }
 
@@ -217,21 +222,30 @@ public class SupabaseFaker : IAsyncLifetime
         return envVars;
     }
 
-    private async Task ExtractSupabaseFiles()
+    private async Task EnsureSupabaseFilesExtracted()
     {
-        var assembly = Assembly.GetExecutingAssembly();
-        const string fileName = "Supabase.zip";
+        await ExtractLock.WaitAsync();
 
-        var assemblyName = typeof(SupabaseFaker).Assembly.GetName().Name;
-        var resourceName = $"{assemblyName}.{fileName}";
+        try
+        {
+            var assembly = Assembly.GetExecutingAssembly();
+            const string fileName = "Supabase.zip";
 
-        await using var stream = assembly.GetManifestResourceStream(resourceName);
+            var assemblyName = typeof(SupabaseFaker).Assembly.GetName().Name;
+            var resourceName = $"{assemblyName}.{fileName}";
 
-        if (stream == null)
-            throw new InvalidOperationException($"{fileName} resource not found");
+            await using var stream = assembly.GetManifestResourceStream(resourceName);
 
-        using var archive = new ZipArchive(stream);
-        archive.ExtractToDirectory(_dataPath, true);
+            if (stream == null)
+                throw new InvalidOperationException($"{fileName} resource not found");
+
+            using var archive = new ZipArchive(stream);
+            archive.ExtractToDirectory(_dataPath, true);
+        }
+        finally
+        {
+            ExtractLock.Release();
+        }
     }
 
     [MemberNotNull(nameof(Postgres))]

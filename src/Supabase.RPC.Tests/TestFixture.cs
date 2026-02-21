@@ -64,8 +64,11 @@ public class TestFixture : IDisposable
     /// </summary>
     private async Task ExecuteRpcScripts()
     {
-        var connectionString =
-            _faker.Postgres.PostgresExternalConnectionString.Replace("supabase_auth_admin", "postgres");
+        var connectionStringBuilder = new NpgsqlConnectionStringBuilder(_faker.Postgres.PostgresExternalConnectionString)
+        {
+            Username = "supabase_admin"
+        };
+        var connectionString = connectionStringBuilder.ConnectionString;
 
         await using var connection = new NpgsqlConnection(connectionString);
         await connection.OpenAsync();
