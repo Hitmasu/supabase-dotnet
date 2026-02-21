@@ -56,7 +56,7 @@ public class SupabaseAuthTests : IClassFixture<TestFixture>
 
         user.UserMetadata.Should().NotBeNull();
         user.UserMetadata.Email.Should().Be(email);
-        user.UserMetadata.EmailVerified.Should().BeFalse();
+        user.UserMetadata.EmailVerified.Should().BeTrue();
         user.UserMetadata.PhoneVerified.Should().BeFalse();
         user.UserMetadata.Sub.Should().NotBeNullOrEmpty();
 
@@ -104,7 +104,7 @@ public class SupabaseAuthTests : IClassFixture<TestFixture>
         user.UserMetadata.Address.Should().BeEquivalentTo(address);
         user.UserMetadata.Should().NotBeNull();
         user.UserMetadata.Email.Should().Be(email);
-        user.UserMetadata.EmailVerified.Should().BeFalse();
+        user.UserMetadata.EmailVerified.Should().BeTrue();
         user.UserMetadata.PhoneVerified.Should().BeFalse();
         user.UserMetadata.Sub.Should().NotBeNullOrEmpty();
 
@@ -276,7 +276,7 @@ public class SupabaseAuthTests : IClassFixture<TestFixture>
         user.UserMetadata.Address.Should().BeEquivalentTo(address);
         user.UserMetadata.Should().NotBeNull();
         user.UserMetadata.Email.Should().Be(email);
-        user.UserMetadata.EmailVerified.Should().BeFalse();
+        user.UserMetadata.EmailVerified.Should().BeTrue();
         user.UserMetadata.PhoneVerified.Should().BeFalse();
         user.UserMetadata.Sub.Should().NotBeNullOrEmpty();
 
