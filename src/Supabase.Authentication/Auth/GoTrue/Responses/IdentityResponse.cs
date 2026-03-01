@@ -5,7 +5,10 @@ namespace Supabase.Authentication.Auth.GoTrue.Responses;
 
 public class IdentityResponse<TCustomMetadata> where TCustomMetadata : UserMetadataBase
 {
-    public Guid Id { get; set; }
+    /// <summary>
+    /// Provider user identifier (for example, Google subject), not a UUID.
+    /// </summary>
+    public string Id { get; set; }
 
     [JsonPropertyName("identity_id")]
     public Guid IdentityId { get; set; }
