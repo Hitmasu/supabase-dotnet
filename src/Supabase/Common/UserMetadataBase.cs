@@ -19,5 +19,8 @@ public class UserMetadataBase
     public bool? PhoneVerified { get; set; }
 
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Id { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Sub { get; set; }
 }

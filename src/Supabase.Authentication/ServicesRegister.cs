@@ -9,6 +9,7 @@ using Supabase.Authentication.Auth.GoTrue;
 using Supabase.Authentication.Auth.JwtSigningKeys;
 using Supabase.Authentication.Configuration;
 using Supabase.Clients.Handlers;
+using Supabase.Common;
 using Supabase.Common.TokenResolver;
 using Supabase.Utils;
 using Supabase.Utils.Extensions;
@@ -137,6 +138,14 @@ public static class ServicesRegister
 
             var options = jsonOptions ?? JsonGlobal.JsonSerializerOptions;
             var user = JsonSerializer.Deserialize<TUser>(userMetadata, options);
+
+            // Ensure user identity uses JWT subject (Supabase auth.users UUID), not provider-specific metadata fields.
+            if (user is UserMetadataBase userMetadataBase)
+            {
+                var subject = jwtTokenObj.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
+                if (!subject.IsNullOrEmpty())
+                    userMetadataBase.Id = subject;
+            }
 
             return user!;
         });
