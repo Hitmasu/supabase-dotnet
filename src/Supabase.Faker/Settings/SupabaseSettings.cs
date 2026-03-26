@@ -12,7 +12,10 @@ public class SupabaseSettings : BaseSettings
     }
 
     public Uri Uri =>
-        new UriBuilder(Uri.UriSchemeHttp, _kongContainer.Hostname, _kongContainer.GetMappedPublicPort(8000)).Uri;
+        new UriBuilder(
+            Uri.UriSchemeHttp,
+            ResolveDockerHost(_kongContainer.Hostname),
+            _kongContainer.GetMappedPublicPort(8000)).Uri;
 
     public string ServiceRoleKey => EnvVars["SERVICE_ROLE_KEY"];
 }

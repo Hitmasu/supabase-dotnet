@@ -30,6 +30,13 @@ services.AddSupabase("https://yourapiurlsupabase.co", "apikey");
 | Postgrest         | -              | 🏗️ In development |
 | Functions         | -              | 🏗️ In development |
 
+**Supabase Faker**
+-----------------
+
+For integration tests, `supabase-dotnet-faker` provisions a local Supabase stack with Testcontainers.
+
+As of `1.2.1`, the faker injects bootstrap SQL and Kong configuration files with Docker resource mappings instead of host bind mounts. This keeps the package working in containerized runners where the test process and the Docker daemon do not share the same `/tmp` filesystem view.
+
 **Authentication**
 -----------------
 

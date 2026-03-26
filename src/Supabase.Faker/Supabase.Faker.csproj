@@ -6,12 +6,12 @@
         <Nullable>enable</Nullable>
         <Authors>Hitmasu</Authors>
         <LangVersion>latest</LangVersion>
-        <Description>A client for Supabase Authentication.</Description>
+        <Description>Testcontainers-based Supabase stack for .NET integration tests.</Description>
         <RepositoryUrl>https://github.com/Hitmasu/supabase-dotnet</RepositoryUrl>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageId>supabase-dotnet-faker</PackageId>
-        <Version>1.2.0</Version>
+        <Version>1.2.1</Version>
         <RepositoryType>Git</RepositoryType>
         <PackageTags>Supabase</PackageTags>
     </PropertyGroup>

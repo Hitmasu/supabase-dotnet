@@ -32,7 +32,7 @@ public class PostgresSettings : BaseSettings
     /// <param name="isInternal"></param>
     /// <returns></returns>
     public string GetConnectionString(bool isInternal = false) =>
-        $"Host={(isInternal ? "supabase-db" : "localhost")};" +
+        $"Host={(isInternal ? "supabase-db" : ResolveDockerHost("localhost"))};" +
         $"Port={Port};" +
         $"Database={PostgresDatabase};" +
         $"Username={Username};" +

@@ -56,6 +56,11 @@ public class SupabaseFaker : IAsyncLifetime
     {
         config ??= new FakerConfig();
         _suffix = shouldReuse ? string.Empty : $"-{Guid.NewGuid().ToString("N").Substring(0, 8)}";
+        var readableFileMode =
+            DotNet.Testcontainers.Configurations.UnixFileModes.UserRead |
+            DotNet.Testcontainers.Configurations.UnixFileModes.UserWrite |
+            DotNet.Testcontainers.Configurations.UnixFileModes.GroupRead |
+            DotNet.Testcontainers.Configurations.UnixFileModes.OtherRead;
 
         _dataPath = Path.Combine(Path.GetTempPath(), $"supabase-data{_suffix}");
         Directory.CreateDirectory(_dataPath);
@@ -83,16 +88,34 @@ public class SupabaseFaker : IAsyncLifetime
             .WithEnvironment("JWT_SECRET", _envVars["JWT_SECRET"])
             .WithEnvironment("JWT_EXPIRY", _envVars["JWT_EXPIRY"])
             .WithPortBinding(int.Parse(_envVars["POSTGRES_PORT"]), true)
-            .WithBindMount($"{_dataPath}/volumes/db/realtime.sql",
-                "/docker-entrypoint-initdb.d/migrations/99-realtime.sql")
-            .WithBindMount($"{_dataPath}/volumes/db/webhooks.sql",
-                "/docker-entrypoint-initdb.d/init-scripts/98-webhooks.sql")
-            .WithBindMount($"{_dataPath}/volumes/db/roles.sql", "/docker-entrypoint-initdb.d/init-scripts/99-roles.sql")
-            .WithBindMount($"{_dataPath}/volumes/db/jwt.sql", "/docker-entrypoint-initdb.d/init-scripts/99-jwt.sql")
-            .WithBindMount($"{_dataPath}/volumes/db/_supabase.sql",
-                "/docker-entrypoint-initdb.d/migrations/97-_supabase.sql")
-            .WithBindMount($"{_dataPath}/volumes/db/logs.sql", "/docker-entrypoint-initdb.d/migrations/99-logs.sql")
-            .WithBindMount($"{_dataPath}/volumes/db/pooler.sql", "/docker-entrypoint-initdb.d/migrations/99-pooler.sql")
+            .WithResourceMapping(
+                File.ReadAllBytes(Path.Combine(_dataPath, "volumes", "db", "realtime.sql")),
+                "/docker-entrypoint-initdb.d/migrations/99-realtime.sql",
+                readableFileMode)
+            .WithResourceMapping(
+                File.ReadAllBytes(Path.Combine(_dataPath, "volumes", "db", "webhooks.sql")),
+                "/docker-entrypoint-initdb.d/init-scripts/98-webhooks.sql",
+                readableFileMode)
+            .WithResourceMapping(
+                File.ReadAllBytes(Path.Combine(_dataPath, "volumes", "db", "roles.sql")),
+                "/docker-entrypoint-initdb.d/init-scripts/99-roles.sql",
+                readableFileMode)
+            .WithResourceMapping(
+                File.ReadAllBytes(Path.Combine(_dataPath, "volumes", "db", "jwt.sql")),
+                "/docker-entrypoint-initdb.d/init-scripts/99-jwt.sql",
+                readableFileMode)
+            .WithResourceMapping(
+                File.ReadAllBytes(Path.Combine(_dataPath, "volumes", "db", "_supabase.sql")),
+                "/docker-entrypoint-initdb.d/migrations/97-_supabase.sql",
+                readableFileMode)
+            .WithResourceMapping(
+                File.ReadAllBytes(Path.Combine(_dataPath, "volumes", "db", "logs.sql")),
+                "/docker-entrypoint-initdb.d/migrations/99-logs.sql",
+                readableFileMode)
+            .WithResourceMapping(
+                File.ReadAllBytes(Path.Combine(_dataPath, "volumes", "db", "pooler.sql")),
+                "/docker-entrypoint-initdb.d/migrations/99-pooler.sql",
+                readableFileMode)
             .WithWaitStrategy(Wait.ForUnixContainer()
                 .UntilCommandIsCompleted("pg_isready", "-U", "postgres", "-h", "localhost"))
             .Build();
@@ -178,7 +201,10 @@ public class SupabaseFaker : IAsyncLifetime
             .WithEnvironment("DASHBOARD_PASSWORD", _envVars["DASHBOARD_PASSWORD"])
             .WithPortBinding(int.Parse(_envVars["KONG_HTTP_PORT"]), true)
             .WithPortBinding(int.Parse(_envVars["KONG_HTTPS_PORT"]), true)
-            .WithBindMount($"{_dataPath}/volumes/api/kong.yml", "/home/kong/temp.yml")
+            .WithResourceMapping(
+                File.ReadAllBytes(Path.Combine(_dataPath, "volumes", "api", "kong.yml")),
+                "/home/kong/temp.yml",
+                readableFileMode)
             .WithEntrypoint("/bin/bash", "-c", @"
                 cp /home/kong/temp.yml /home/kong/kong.yml && \
                 sed -i 's|\$SUPABASE_ANON_KEY|'$SUPABASE_ANON_KEY'|g; \
