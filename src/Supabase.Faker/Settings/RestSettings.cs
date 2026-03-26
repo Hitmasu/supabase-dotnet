@@ -18,7 +18,10 @@ public class RestSettings : BaseSettings
     /// The URI to connect to the REST API.
     /// </summary>
     public Uri Uri =>
-        new UriBuilder(Uri.UriSchemeHttp, _restContainer.Hostname, _restContainer.GetMappedPublicPort(3000)).Uri;
+        new UriBuilder(
+            Uri.UriSchemeHttp,
+            ResolveDockerHost(_restContainer.Hostname),
+            _restContainer.GetMappedPublicPort(3000)).Uri;
 
     /// <summary>
     /// The database schemas exposed by the REST API.
